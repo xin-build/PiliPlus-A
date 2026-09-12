@@ -1,0 +1,781 @@
+import 'dart:math' show max, min;
+
+import 'package:PiliPlus/grpc/bilibili/app/playurl/v1.pb.dart' show PlayViewReply;
+import 'package:PiliPlus/grpc/bilibili/playershared.pb.dart' as $shared show VodInfo;
+import 'package:PiliPlus/models/common/video/audio_quality.dart';
+import 'package:PiliPlus/models/common/video/video_quality.dart';
+import 'package:PiliPlus/models_new/sponsor_block/segment_item.dart';
+import 'package:PiliPlus/utils/extension/iterable_ext.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
+
+class PlayUrlModel {
+  PlayUrlModel({
+    this.from,
+    this.result,
+    this.message,
+    this.quality,
+    this.format,
+    this.timeLength,
+    this.acceptFormat,
+    this.acceptDesc,
+    this.acceptQuality,
+    this.videoCodecid,
+    this.seekParam,
+    this.seekType,
+    this.dash,
+    this.supportFormats,
+    this._lastPlayTime = 0,
+    this.lastPlayCid,
+  });
+
+  String? from;
+  String? result;
+  String? message;
+  int? quality;
+  String? format;
+  int? timeLength;
+  String? acceptFormat;
+  List<dynamic>? acceptDesc;
+  List<int>? acceptQuality;
+  int? videoCodecid;
+  String? seekParam;
+  String? seekType;
+  Dash? dash;
+  List<Durl>? durl;
+  List<FormatItem>? supportFormats;
+  Volume? volume;
+
+  int _lastPlayTime = 0;
+  int get lastPlayTime => _lastPlayTime;
+  set lastPlayTime(int? value) {
+    if (value != null && value > 0) {
+      _lastPlayTime = value;
+    } else {
+      _lastPlayTime = 0;
+    }
+  }
+
+  int? lastPlayCid;
+  String? curLanguage;
+  Language? language;
+  List<SegmentItemModel>? clipInfoList;
+
+  int findAvailableVideoQuality(int preferredQuality) {
+    final curHighestVideoQa = dash!.video!.first.quality.code;
+    if (acceptQuality case final qualitys?
+        when preferredQuality <= curHighestVideoQa) {
+      return qualitys.findClosestTarget((e) => e <= preferredQuality, max);
+    } else {
+      return curHighestVideoQa;
+    }
+  }
+
+  @pragma('vm:notify-debugger-on-exception')
+  int get missingVideoQualityBelowHighest {
+    int best = -1;
+    try {
+      final video = dash!.video!;
+      final available = video.availableVideoQualities;
+      final highest = video.first.id;
+
+      for (final item in supportFormats!) {
+        final quality = item.quality;
+        if (quality != null &&
+            best < quality &&
+            quality < highest &&
+            !available.contains(quality)) {
+          best = quality;
+        }
+      }
+    } catch (_) {}
+    return best;
+  }
+
+  PlayUrlModel.fromJson(Map<String, dynamic> json) {
+    from = json['from'];
+    result = json['result'];
+    message = json['message'];
+    quality = json['quality'];
+    format = json['format'];
+    timeLength = json['timelength'];
+    acceptFormat = json['accept_format'];
+    acceptDesc = json['accept_description'];
+    acceptQuality = (json['accept_quality'] as List?)
+        ?.map<int>((e) => e as int)
+        .toList();
+    videoCodecid = json['video_codecid'];
+    seekParam = json['seek_param'];
+    seekType = json['seek_type'];
+    dash = json['dash'] != null ? Dash.fromJson(json['dash']) : null;
+    durl = (json['durl'] as List?)?.map<Durl>((e) => Durl.fromJson(e)).toList();
+    supportFormats = (json['support_formats'] as List?)
+        ?.map<FormatItem>((e) => FormatItem.fromJson(e))
+        .toList();
+    volume = json['volume'] == null ? null : Volume.fromJson(json['volume']);
+    lastPlayTime = json['last_play_time'];
+    lastPlayCid = json['last_play_cid'];
+    curLanguage = json['cur_language'];
+    language = json['language'] == null
+        ? null
+        : Language.fromJson(json['language']);
+    // debug
+    // final clipInfoList = [
+    //   {
+    //     "start": 0,
+    //     "end": 150,
+    //     "clipType": "CLIP_TYPE_OP",
+    //   },
+    //   {
+    //     "start": timeLength! ~/ 1000 - 150,
+    //     "end": timeLength! ~/ 1000,
+    //     "clipType": "CLIP_TYPE_ED",
+    //   },
+    // ];
+    try {
+      final List? clipInfoList = json['clip_info_list'];
+      if (clipInfoList != null && clipInfoList.isNotEmpty) {
+        this.clipInfoList = clipInfoList
+            .map((e) => SegmentItemModel.fromPgcJson(e, timeLength))
+            .toList();
+      }
+    } catch (_) {
+      if (kDebugMode) rethrow;
+    }
+  }
+
+  PlayUrlModel.fromPlayViewReply(PlayViewReply reply) {
+    if (!reply.hasVideoInfo()) return;
+    final vi = reply.videoInfo;
+    quality = vi.quality;
+    format = vi.format;
+    timeLength = vi.timelength.toInt();
+    videoCodecid = vi.videoCodecid;
+
+    final videoItems = <VideoItem>[];
+    final acceptDescList = <String>[];
+    final acceptQualityList = <int>[];
+    final formatItemList = <FormatItem>[];
+
+    for (final s in vi.streamList) {
+      final info = s.streamInfo;
+      final qn = info.quality;
+      acceptQualityList.add(qn);
+      acceptDescList.add(info.description);
+
+      final List<String> availableCodecs = [];
+      if (s.hasMultiDashVideo() && s.multiDashVideo.dashVideos.isNotEmpty) {
+        for (final dv in s.multiDashVideo.dashVideos) {
+          final c = _codecidToCodecs(dv.codecid);
+          if (!availableCodecs.contains(c)) availableCodecs.add(c);
+          if (dv.baseUrl.isNotEmpty) {
+            videoItems.add(
+              VideoItem(
+                id: qn,
+                baseUrl: dv.baseUrl,
+                backupUrl: dv.backupUrl.toList(),
+                bandWidth: dv.bandwidth,
+                codecid: dv.codecid,
+                codecs: c,
+                frameRate: dv.frameRate,
+                width: dv.width,
+                height: dv.height,
+                quality: VideoQuality.fromCode(qn),
+              ),
+            );
+          }
+        }
+      } else if (s.hasDashVideo()) {
+        final dv = s.dashVideo;
+        final c = _codecidToCodecs(dv.codecid);
+        availableCodecs.add(c);
+        if (dv.baseUrl.isNotEmpty) {
+          videoItems.add(
+            VideoItem(
+              id: qn,
+              baseUrl: dv.baseUrl,
+              backupUrl: dv.backupUrl.toList(),
+              bandWidth: dv.bandwidth,
+              codecid: dv.codecid,
+              codecs: c,
+              frameRate: dv.frameRate,
+              width: dv.width,
+              height: dv.height,
+              quality: VideoQuality.fromCode(qn),
+            ),
+          );
+        }
+      }
+
+      formatItemList.add(
+        FormatItem(
+          quality: qn,
+          format: info.format,
+          newDesc: info.newDescription.isNotEmpty
+              ? info.newDescription
+              : info.description,
+          displayDesc: info.displayDesc,
+          codecs: availableCodecs.isNotEmpty ? availableCodecs : ['avc1.640028'],
+        ),
+      );
+    }
+
+    videoItems.sort((a, b) => b.quality.code.compareTo(a.quality.code));
+
+    acceptDesc = acceptDescList;
+    acceptQuality = acceptQualityList;
+    supportFormats = formatItemList;
+
+    final audioItems = <AudioItem>[];
+    if (vi.hasLossLessItem() && vi.lossLessItem.hasAudio()) {
+      final a = vi.lossLessItem.audio;
+      if (a.baseUrl.isNotEmpty) {
+        audioItems.add(
+          AudioItem(
+            id: a.id,
+            baseUrl: a.baseUrl,
+            backupUrl: a.backupUrl.toList(),
+            bandWidth: a.bandwidth,
+            codecid: a.codecid,
+            codecs: 'fLaC',
+            quality: AudioQuality.fromCode(a.id).desc,
+          ),
+        );
+      }
+    }
+    if (vi.hasDolby() && vi.dolby.audio.isNotEmpty) {
+      for (final a in vi.dolby.audio) {
+        if (a.baseUrl.isNotEmpty) {
+          audioItems.add(
+            AudioItem(
+              id: a.id,
+              baseUrl: a.baseUrl,
+              backupUrl: a.backupUrl.toList(),
+              bandWidth: a.bandwidth,
+              codecid: a.codecid,
+              codecs: 'ec-3',
+              quality: AudioQuality.fromCode(a.id).desc,
+            ),
+          );
+        }
+      }
+    }
+    for (final a in vi.dashAudio) {
+      if (a.baseUrl.isNotEmpty) {
+        audioItems.add(
+          AudioItem(
+            id: a.id,
+            baseUrl: a.baseUrl,
+            backupUrl: a.backupUrl.toList(),
+            bandWidth: a.bandwidth,
+            codecid: a.codecid,
+            codecs: 'mp4a.40.2',
+            quality: AudioQuality.fromCode(a.id).desc,
+          ),
+        );
+      }
+    }
+
+    dash = Dash(
+      duration: (vi.timelength ~/ 1000).toInt(),
+      video: videoItems.isEmpty ? null : videoItems,
+      audio: audioItems.isEmpty ? null : audioItems,
+    );
+  }
+
+  PlayUrlModel.fromVodInfo($shared.VodInfo vi) {
+    quality = vi.quality;
+    format = vi.format;
+    timeLength = vi.timelength.toInt();
+    videoCodecid = vi.videoCodecid;
+
+    final videoItems = <VideoItem>[];
+    final acceptDescList = <String>[];
+    final acceptQualityList = <int>[];
+    final formatItemList = <FormatItem>[];
+
+    for (final s in vi.streamList) {
+      final info = s.streamInfo;
+      final qn = info.quality;
+      acceptQualityList.add(qn);
+      acceptDescList.add(info.description);
+
+      final List<String> availableCodecs = [];
+      if (s.hasMultiDashVideo() && s.multiDashVideo.dashVideos.isNotEmpty) {
+        for (final dv in s.multiDashVideo.dashVideos) {
+          final c = _codecidToCodecs(dv.codecid);
+          if (!availableCodecs.contains(c)) availableCodecs.add(c);
+          if (dv.baseUrl.isNotEmpty) {
+            videoItems.add(
+              VideoItem(
+                id: qn,
+                baseUrl: dv.baseUrl,
+                backupUrl: dv.backupUrl.toList(),
+                bandWidth: dv.bandwidth,
+                codecid: dv.codecid,
+                codecs: c,
+                frameRate: dv.frameRate,
+                width: dv.width,
+                height: dv.height,
+                quality: VideoQuality.fromCode(qn),
+              ),
+            );
+          }
+        }
+      } else if (s.hasDashVideo()) {
+        final dv = s.dashVideo;
+        final c = _codecidToCodecs(dv.codecid);
+        availableCodecs.add(c);
+        if (dv.baseUrl.isNotEmpty) {
+          videoItems.add(
+            VideoItem(
+              id: qn,
+              baseUrl: dv.baseUrl,
+              backupUrl: dv.backupUrl.toList(),
+              bandWidth: dv.bandwidth,
+              codecid: dv.codecid,
+              codecs: c,
+              frameRate: dv.frameRate,
+              width: dv.width,
+              height: dv.height,
+              quality: VideoQuality.fromCode(qn),
+            ),
+          );
+        }
+      }
+
+      formatItemList.add(
+        FormatItem(
+          quality: qn,
+          format: info.format,
+          newDesc: info.newDescription.isNotEmpty
+              ? info.newDescription
+              : info.description,
+          displayDesc: info.displayDesc,
+          codecs: availableCodecs.isNotEmpty ? availableCodecs : ['avc1.640028'],
+        ),
+      );
+    }
+
+    videoItems.sort((a, b) => b.quality.code.compareTo(a.quality.code));
+
+    acceptDesc = acceptDescList;
+    acceptQuality = acceptQualityList;
+    supportFormats = formatItemList;
+
+    final audioItems = <AudioItem>[];
+    if (vi.hasLossLessItem() && vi.lossLessItem.hasAudio()) {
+      final a = vi.lossLessItem.audio;
+      if (a.baseUrl.isNotEmpty) {
+        audioItems.add(
+          AudioItem(
+            id: a.id,
+            baseUrl: a.baseUrl,
+            backupUrl: a.backupUrl.toList(),
+            bandWidth: a.bandwidth,
+            codecid: a.codecid,
+            codecs: 'fLaC',
+            quality: AudioQuality.fromCode(a.id).desc,
+          ),
+        );
+      }
+    }
+    if (vi.hasDolby() && vi.dolby.audio.isNotEmpty) {
+      for (final a in vi.dolby.audio) {
+        if (a.baseUrl.isNotEmpty) {
+          audioItems.add(
+            AudioItem(
+              id: a.id,
+              baseUrl: a.baseUrl,
+              backupUrl: a.backupUrl.toList(),
+              bandWidth: a.bandwidth,
+              codecid: a.codecid,
+              codecs: 'ec-3',
+              quality: AudioQuality.fromCode(a.id).desc,
+            ),
+          );
+        }
+      }
+    }
+    for (final a in vi.dashAudio) {
+      if (a.baseUrl.isNotEmpty) {
+        audioItems.add(
+          AudioItem(
+            id: a.id,
+            baseUrl: a.baseUrl,
+            backupUrl: a.backupUrl.toList(),
+            bandWidth: a.bandwidth,
+            codecid: a.codecid,
+            codecs: 'mp4a.40.2',
+            quality: AudioQuality.fromCode(a.id).desc,
+          ),
+        );
+      }
+    }
+
+    dash = Dash(
+      duration: (vi.timelength ~/ 1000).toInt(),
+      video: videoItems.isEmpty ? null : videoItems,
+      audio: audioItems.isEmpty ? null : audioItems,
+    );
+    if (vi.hasAiAudio() && vi.aiAudio.aiAudioItems.isNotEmpty) {
+      language = Language(
+        support: vi.aiAudio.supportAiAudio,
+        items: vi.aiAudio.aiAudioItems.map((item) {
+          final t = item.title.isNotEmpty
+              ? item.title
+              : (item.buttonTitle.isNotEmpty ? item.buttonTitle : item.subtitleLang);
+          return LanguageItem(
+            title: t.contains('AI') ? t : '$t（AI）',
+            lang: item.subtitleLang,
+            subtitleLang: item.subtitleLang,
+            buttonTitle: item.buttonTitle,
+            isAi: true,
+          );
+        }).toList(),
+      );
+    }
+  }
+
+  static String _codecidToCodecs(int? codecid) {
+    switch (codecid) {
+      case 14:
+        return 'dvh1.08.07';
+      case 13:
+        return 'av01.0.08M.08';
+      case 12:
+        return 'hev1.1.6.L150.90';
+      case 7:
+      default:
+        return 'avc1.640028';
+    }
+  }
+}
+
+class Language {
+  Language({
+    this.support,
+    this.items,
+  });
+
+  bool? support;
+  List<LanguageItem>? items;
+
+  Language.fromJson(Map<String, dynamic> json) {
+    support = json['support'];
+    items =
+        (json['items'] as List?)?.map((e) => LanguageItem.fromJson(e)).toList()
+          ?..sort((a, b) {
+            final aHasZh = a.lang?.contains('zh') ?? false;
+            final bHasZh = b.lang?.contains('zh') ?? false;
+            if (aHasZh != bHasZh) return aHasZh ? -1 : 1;
+            if (a.isAi != b.isAi) return a.isAi ? 1 : -1;
+            return 0;
+          });
+  }
+}
+
+class LanguageItem {
+  LanguageItem({
+    this.lang,
+    this.title,
+    this.subtitleLang,
+    this.buttonTitle,
+    this.isAi = false,
+  });
+
+  String? lang;
+  String? title;
+  String? subtitleLang;
+  String? buttonTitle;
+  bool isAi = false;
+
+  LanguageItem.fromJson(Map<String, dynamic> json) {
+    lang = json['lang'];
+    isAi = json['production_type'] == 2;
+    title = '${json['title']}${isAi ? '（AI）' : ''}';
+    subtitleLang = json['subtitle_lang'];
+  }
+}
+
+class Dash {
+  Dash({
+    this.duration,
+    this.minBufferTime,
+    this.video,
+    this.audio,
+  });
+
+  int? duration;
+  double? minBufferTime;
+  List<VideoItem>? video;
+  List<AudioItem>? audio;
+
+  Dash.fromJson(Map<String, dynamic> json) {
+    duration = json['duration'];
+    minBufferTime = json['minBufferTime'];
+    video = (json['video'] as List?)
+        ?.map<VideoItem>((e) => VideoItem.fromJson(e))
+        .toList();
+    final audio = [
+      if (json['flac']?['audio'] case Map<String, dynamic> flac)
+        AudioItem.fromJson(flac),
+      if (json['dolby']?['audio'] case List list)
+        ...list.map((e) => AudioItem.fromJson(e)),
+      if (json['audio'] case List list)
+        ...list.map((e) => AudioItem.fromJson(e)),
+    ];
+    this.audio = audio.isEmpty ? null : audio;
+  }
+}
+
+class Durl {
+  int? order;
+  int? length;
+  int? size;
+  String? ahead;
+  String? vhead;
+  String? url;
+  List<String>? backupUrl;
+
+  Durl({
+    this.order,
+    this.length,
+    this.size,
+    this.ahead,
+    this.vhead,
+    this.url,
+    this.backupUrl,
+  });
+
+  factory Durl.fromJson(Map<String, dynamic> json) {
+    return Durl(
+      order: json['order'],
+      length: json['length'],
+      size: json['size'],
+      ahead: json['ahead'],
+      vhead: json['vhead'],
+      url: json['url'],
+      backupUrl: (json['backup_url'] as List?)?.fromCast<String>(),
+    );
+  }
+
+  Iterable<String> get playUrls sync* {
+    if (url?.isNotEmpty == true) yield url!;
+    if (backupUrl?.isNotEmpty == true) yield* backupUrl!;
+  }
+}
+
+abstract class BaseItem {
+  late int id;
+  String? baseUrl;
+  List<String>? backupUrl;
+  int? bandWidth;
+  String? mimeType;
+  String? codecs;
+  int? width;
+  int? height;
+  String? frameRate;
+  String? sar;
+  int? startWithSap;
+  Map? segmentBase;
+  int? codecid;
+
+  BaseItem({
+    required this.id,
+    this.baseUrl,
+    this.backupUrl,
+    this.bandWidth,
+    this.mimeType,
+    this.codecs,
+    this.width,
+    this.height,
+    this.frameRate,
+    this.sar,
+    this.startWithSap,
+    this.segmentBase,
+    this.codecid,
+  });
+
+  BaseItem.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    baseUrl = json['baseUrl'] ?? json['base_url'];
+    backupUrl = ((json['backupUrl'] ?? json['backup_url']) as List?)
+        ?.fromCast<String>();
+    bandWidth = json['bandWidth'] ?? json['bandwidth'];
+    mimeType = json['mime_type'];
+    codecs = json['codecs'];
+    width = json['width'];
+    height = json['height'];
+    frameRate = json['frameRate'] ?? json['frame_rate'];
+    sar = json['sar'];
+    startWithSap = json['startWithSap'] ?? json['start_with_sap'];
+    segmentBase = json['segmentBase'] ?? json['segment_base'];
+    codecid = json['codecid'];
+  }
+
+  Iterable<String> get playUrls sync* {
+    if (baseUrl?.isNotEmpty == true) yield baseUrl!;
+    if (backupUrl?.isNotEmpty == true) yield* backupUrl!;
+  }
+}
+
+class VideoItem extends BaseItem {
+  late VideoQuality quality;
+
+  VideoItem({
+    required super.id,
+    super.baseUrl,
+    super.backupUrl,
+    super.bandWidth,
+    super.mimeType,
+    super.codecs,
+    super.width,
+    super.height,
+    super.frameRate,
+    super.sar,
+    super.startWithSap,
+    super.segmentBase,
+    super.codecid,
+    required this.quality,
+  });
+
+  VideoItem.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
+    quality = VideoQuality.fromCode(json['id']);
+  }
+}
+
+class AudioItem extends BaseItem {
+  late String quality;
+
+  AudioItem({
+    required super.id,
+    super.baseUrl,
+    super.backupUrl,
+    super.bandWidth,
+    super.mimeType,
+    super.codecs,
+    super.width,
+    super.height,
+    super.frameRate,
+    super.sar,
+    super.startWithSap,
+    super.segmentBase,
+    super.codecid,
+    String? quality,
+  }) {
+    if (quality != null) {
+      this.quality = quality;
+    } else {
+      this.quality = AudioQuality.fromCode(id).desc;
+    }
+  }
+  AudioItem.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
+    quality = AudioQuality.fromCode(json['id']).desc;
+  }
+}
+
+extension BaseItemExt<T extends BaseItem> on List<T> {
+  void merge(List<T>? other) {
+    if (other == null) return;
+    final keys = {for (final item in this) (item.id, item.codecid)};
+    for (final item in other) {
+      if (keys.add((item.id, item.codecid))) {
+        add(item);
+      }
+    }
+    sort((a, b) => b.id.compareTo(a.id));
+  }
+
+  Set<int> get availableVideoQualities => map((i) => i.id).toSet();
+}
+
+class FormatItem {
+  FormatItem({
+    this.quality,
+    this.format,
+    this.newDesc,
+    this.displayDesc,
+    this.codecs,
+  });
+
+  int? quality;
+  String? format;
+  String? newDesc;
+  String? displayDesc;
+  List<String>? codecs;
+
+  FormatItem.fromJson(Map<String, dynamic> json) {
+    quality = json['quality'];
+    format = json['format'];
+    newDesc = json['new_description'];
+    displayDesc = json['display_desc'];
+    codecs = (json['codecs'] as List?)?.fromCast<String>();
+  }
+}
+
+class Volume {
+  Volume({
+    required this.measuredI,
+    required this.measuredLra,
+    required this.measuredTp,
+    required this.measuredThreshold,
+    required this.targetOffset,
+    required this.targetI,
+    required this.targetTp,
+    // required this.multiSceneArgs,
+  });
+
+  final num measuredI;
+  final num measuredLra;
+  final num measuredTp;
+  final num measuredThreshold;
+  final num targetOffset;
+  final num targetI;
+  final num targetTp;
+
+  // final MultiSceneArgs? multiSceneArgs;
+
+  // FFmpeg loudnorm 滤镜的标准有效范围（https://ffmpeg.org/ffmpeg-filters.html#loudnorm）
+  static const double minTpValue = -9.0;
+  static const double maxTpValue = 0.0;
+
+  factory Volume.fromJson(Map<String, dynamic> json) {
+    return Volume(
+      measuredI: json["measured_i"] ?? 0,
+      measuredLra: json["measured_lra"] ?? 0,
+      measuredTp: json["measured_tp"] ?? 0,
+      measuredThreshold: json["measured_threshold"] ?? 0,
+      targetOffset: json["target_offset"] ?? 0,
+      targetI: json["target_i"] ?? 0,
+      targetTp: json["target_tp"] ?? 0,
+      // multiSceneArgs: json["multi_scene_args"] == null ? null : MultiSceneArgs.fromJson(json["multi_scene_args"]),
+    );
+  }
+
+  String format(Map<String, num> config) {
+    final lra = max(config['lra'] ?? 11, measuredLra);
+    num i = config['i'] ?? targetI;
+    final tp = min(
+      config['tp'] ?? targetTp,
+      measuredTp,
+    ).clamp(minTpValue, maxTpValue);
+    final offset = config['offset'] ?? targetOffset;
+    num measuredI = this.measuredI;
+    if (measuredI > 0) {
+      i -= measuredI;
+      measuredI = 0;
+    }
+    num measuredThreshold = this.measuredThreshold;
+    if (measuredThreshold > 0) {
+      measuredThreshold = 0;
+    }
+
+    return 'LRA=$lra:I=$i:TP=$tp:offset=$offset:linear=true:measured_I=$measuredI:measured_LRA=$measuredLra:measured_TP=$measuredTp:measured_thresh=$measuredThreshold';
+  }
+
+  bool get isNotEmpty =>
+      measuredI != 0 ||
+      measuredLra != 0 ||
+      measuredTp != 0 ||
+      measuredThreshold != 0;
+}
