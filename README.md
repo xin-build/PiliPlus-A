@@ -5,14 +5,15 @@
 
 
 <div align="center">
-    <h1>PiliPlus</h1>
+    <h1>PiliPlus-A</h1>
 <div align="center">
     
 ![GitHub repo size](https://img.shields.io/github/repo-size/xin-build/PiliPlus-A) 
 ![GitHub Repo stars](https://img.shields.io/github/stars/xin-build/PiliPlus-A) 
 ![GitHub all releases](https://img.shields.io/github/downloads/xin-build/PiliPlus-A/total) 
 </div>
-    <p>使用Flutter开发的BiliBili第三方客户端</p>
+    <p>使用Flutter开发的全平台BiliBili第三方客户端 (PiliPlus-A)</p>
+    <p><a href="BUILD.md">📖 查看多平台编译与发布指南 (BUILD.md)</a></p>
     
 <img src="assets/screenshots/510shots_so.png" width="32%" alt="home" />
 <img src="assets/screenshots/174shots_so.png" width="32%" alt="home" />

@@ -14,6 +14,7 @@ jobs:
   build-mac-app:
     name: Release Mac
     runs-on: macos-latest
+    permissions: write-all
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,14 +45,16 @@ jobs:
       - name: Prepare Upload
         run: |
           npm install --global create-dmg || true
-          create-dmg build/macos/Build/Products/Release/PiliPlus.app || true
+          APP_PATH=$(find build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -n 1)
+          echo "Found app at $APP_PATH"
+          create-dmg "$APP_PATH" || true
           if ! ls PiliPlus*.dmg 1> /dev/null 2>&1; then
             echo "Fallback to hdiutil create..."
-            hdiutil create -volname "PiliPlus" -srcfolder "build/macos/Build/Products/Release/PiliPlus.app" -ov -format UDZO "PiliPlus_macos_${{ env.version }}.dmg" || true
+            hdiutil create -volname "PiliPlus-A" -srcfolder "$APP_PATH" -ov -format UDZO "PiliPlus_macos_${{ env.version }}.dmg" || true
           else
             mv PiliPlus*.dmg "PiliPlus_macos_${{ env.version }}.dmg" || true
           fi
-          ditto -c -k --sequesterRsrc --keepParent "build/macos/Build/Products/Release/PiliPlus.app" "PiliPlus_macos_${{ env.version }}.zip" || true
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "PiliPlus_macos_${{ env.version }}.zip" || true
         shell: bash
 
       - name: Release
