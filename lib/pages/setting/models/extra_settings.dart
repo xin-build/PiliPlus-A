@@ -292,31 +292,30 @@ List<SettingsModel> get extraSettings => [
     defaultVal: false,
     needReboot: true,
   ),
-  if (kDebugMode || Platform.isAndroid)
-    NormalModel(
-      title: '音量均衡',
-      leading: const Icon(Icons.multitrack_audio),
-      getSubtitle: () {
-        final audioNormalization = AudioNormalization.getTitleFromConfig(
-          Pref.audioNormalization,
-        );
-        String fallback = Pref.fallbackNormalization;
-        if (fallback == '0') {
-          fallback = '';
-        } else {
-          fallback =
-              '，无参数时:「${AudioNormalization.getTitleFromConfig(fallback)}」';
-        }
-        return '当前:「$audioNormalization」$fallback';
-      },
-      onTap: audioNormalization,
-    ),
+  NormalModel(
+    title: '音量均衡',
+    leading: const Icon(Icons.multitrack_audio),
+    getSubtitle: () {
+      final audioNormalization = AudioNormalization.getTitleFromConfig(
+        Pref.audioNormalization,
+      );
+      String fallback = Pref.fallbackNormalization;
+      if (fallback == '0') {
+        fallback = '';
+      } else {
+        fallback =
+            '，无参数时:「${AudioNormalization.getTitleFromConfig(fallback)}」';
+      }
+      return '当前:「$audioNormalization」$fallback';
+    },
+    onTap: audioNormalization,
+  ),
   NormalModel(
     title: '超分辨率',
     leading: const Icon(Icons.stay_current_landscape_outlined),
     getSubtitle: () =>
         '当前:「${Pref.superResolutionType.label}」\n默认设置对番剧生效, 其他视频默认关闭\n超分辨率需要启用硬件解码, 若启用硬件解码后仍然不生效, 尝试切换硬件解码器为 auto-copy',
-    onTap: _showSuperResolutionDialog,
+    onTap: showSuperResolutionDialog,
   ),
   const SwitchModel(
     title: '提前初始化播放器',
@@ -1181,7 +1180,7 @@ void _visitor(Element context) {
   }
 }
 
-Future<void> _showSuperResolutionDialog(
+Future<void> showSuperResolutionDialog(
   BuildContext context,
   VoidCallback setState,
 ) async {

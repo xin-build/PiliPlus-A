@@ -1857,10 +1857,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
                             size: 20,
                             color: Colors.white,
                           ),
-                          onLongPress:
-                              (Platform.isAndroid || kDebugMode) && !isLive
-                              ? screenshotWebp
-                              : null,
+                          onLongPress: !isLive ? screenshotWebp : null,
                           onTap: plPlayerController.takeScreenshot,
                         ),
                       ),

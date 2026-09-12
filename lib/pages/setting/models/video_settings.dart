@@ -5,6 +5,8 @@ import 'package:PiliPlus/models/common/video/cdn_type.dart';
 import 'package:PiliPlus/models/common/video/live_quality.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
+import 'package:PiliPlus/pages/setting/models/extra_settings.dart'
+    show showSuperResolutionDialog;
 import 'package:PiliPlus/pages/setting/models/model.dart';
 import 'package:PiliPlus/pages/setting/widgets/ordered_multi_select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
@@ -16,7 +18,6 @@ import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/video_utils.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
@@ -44,6 +45,13 @@ List<SettingsModel> get videoSettings => [
     leading: Icon(Icons.auto_awesome_outlined),
     setKey: SettingBoxKey.trialVipQuality,
     defaultVal: true,
+  ),
+  NormalModel(
+    title: '超分辨率',
+    leading: const Icon(Icons.stay_current_landscape_outlined),
+    getSubtitle: () =>
+        '当前:「${Pref.superResolutionType.label}」\n默认设置对番剧生效，其他视频默认关闭\n支持自适应锐化 (CAS) 与 Anime4K 着色器，启用硬解获得最佳性能',
+    onTap: showSuperResolutionDialog,
   ),
   NormalModel(
     title: 'B站定向流量支持',
@@ -146,13 +154,12 @@ List<SettingsModel> get videoSettings => [
         '首选解码格式：${(Pref.preferCodecsCellular.map((i) => i.name).join(","))}，请根据设备支持情况与需求调整',
     onTap: _showCellularCodecsDialog,
   ),
-  if (kDebugMode || Platform.isAndroid)
-    NormalModel(
-      title: '音频输出设备',
-      leading: const Icon(Icons.speaker_outlined),
-      getSubtitle: () => '当前：${Pref.audioOutput}',
-      onTap: _showAudioOutputDialog,
-    ),
+  NormalModel(
+    title: '音频输出设备',
+    leading: const Icon(Icons.speaker_outlined),
+    getSubtitle: () => '当前：${Pref.audioOutput}',
+    onTap: _showAudioOutputDialog,
+  ),
   NormalModel(
     title: '缓冲大小',
     leading: const Icon(Icons.storage_outlined),

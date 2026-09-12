@@ -9,6 +9,7 @@ import 'package:PiliPlus/pages/setting/pages/fullscreen_sc_size.dart';
 import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/shortcut_keys_dialog.dart';
 import 'package:PiliPlus/pages/setting/widgets/slider_dialog.dart';
+import 'package:PiliPlus/plugin/pl_player/models/bottom_control_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/bottom_progress_behavior.dart';
 import 'package:PiliPlus/plugin/pl_player/models/fullscreen_mode.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
@@ -321,6 +322,26 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.tempPlayerConf,
     defaultVal: false,
   ),
+  NormalModel(
+    onTap: (context, setState) => Get.toNamed(
+      '/barSetting',
+      arguments: {
+        'key': SettingBoxKey.playerBottomBarSort,
+        'defaultBars': BottomControlType.values,
+        'title': '播放器底栏控制项',
+      },
+    ),
+    title: '播放器底栏控件编辑',
+    subtitle: '自定义播放器底栏控制按钮（AI原声翻译、超分、字幕等）显隐与排序',
+    leading: const Icon(Icons.tune_outlined),
+  ),
+  const SwitchModel(
+    title: '弹幕趋势图',
+    subtitle: '播放器底部显示弹幕趋势图（高能进度条）',
+    leading: Icon(Icons.show_chart),
+    setKey: SettingBoxKey.showDmChart,
+    defaultVal: false,
+  ),
   if (PlatformUtils.isMobile)
     const SwitchModel(
       title: '平板模式竖屏播放页转横屏时全屏',
@@ -329,15 +350,13 @@ List<SettingsModel> get playSettings => [
       setKey: SettingBoxKey.enableLandscapeAutoFullscreen,
       defaultVal: false,
     ),
-  if (Platform.isAndroid) ...[
-    const SwitchModel(
-      title: '启用 HDR 视频',
-      subtitle: '在 HDR 视频中覆盖设置，调用合适的解码与输出参数',
-      leading: Icon(Icons.settings_brightness_outlined),
-      setKey: SettingBoxKey.enableHDR,
-      defaultVal: true,
-    ),
-  ],
+  const SwitchModel(
+    title: '启用 HDR 视频',
+    subtitle: '在 HDR 视频中覆盖设置，调用合适的解码与输出参数',
+    leading: Icon(Icons.settings_brightness_outlined),
+    setKey: SettingBoxKey.enableHDR,
+    defaultVal: true,
+  ),
 ];
 
 Future<void> _showSubtitleDialog(
