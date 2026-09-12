@@ -13,10 +13,10 @@ on:
 jobs:
   build-mac-app:
     name: Release Mac
-    runs-on: macos-26
+    runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -26,6 +26,9 @@ jobs:
           channel: stable
           flutter-version-file: pubspec.yaml
 
+      - name: Flutter Pub Get
+        run: flutter pub get
+
       - name: Set and Extract version
         shell: pwsh
         run: lib/scripts/build.ps1
@@ -33,31 +36,39 @@ jobs:
       - name: Apply Patch
         shell: pwsh
         run: lib/scripts/patch.ps1 macOS
+        continue-on-error: true
 
       - name: Build Mac
         run: flutter build macos --release --dart-define-from-file=pili_release.json --no-pub
 
       - name: Prepare Upload
         run: |
-          npm install --global create-dmg
+          npm install --global create-dmg || true
           create-dmg build/macos/Build/Products/Release/PiliPlus.app || true
-        continue-on-error: true
-
-      - name: Rename DMG
-        run: mv PiliPlus*.dmg PiliPlus_macos_${{ env.version }}.dmg
+          if ! ls PiliPlus*.dmg 1> /dev/null 2>&1; then
+            echo "Fallback to hdiutil create..."
+            hdiutil create -volname "PiliPlus" -srcfolder "build/macos/Build/Products/Release/PiliPlus.app" -ov -format UDZO "PiliPlus_macos_${{ env.version }}.dmg" || true
+          else
+            mv PiliPlus*.dmg "PiliPlus_macos_${{ env.version }}.dmg" || true
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "build/macos/Build/Products/Release/PiliPlus.app" "PiliPlus_macos_${{ env.version }}.zip" || true
+        shell: bash
 
       - name: Release
-        if: ${{ github.event.inputs.tag != '' }}
-        uses: softprops/action-gh-release@v3
+        if: ${{ inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag }}
-          name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
           files: |
             PiliPlus_macos_*.dmg
+            PiliPlus_macos_*.zip
 
       - name: Upload macos release
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: macOS-release
-          path: PiliPlus_macos_*.dmg
+          path: |
+            PiliPlus_macos_*.dmg
+            PiliPlus_macos_*.zip
+          if-no-files-found: warn

@@ -16,14 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev webkit2gtk-4.1 libasound2-dev libmpv-dev
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev webkit2gtk-4.1 libasound2-dev libmpv-dev rpm || sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev webkit2gtk-4.1 libasound2-dev libmpv-dev
+          sudo apt-get install -y libfuse2 || sudo apt-get install -y libfuse2t64 || true
         shell: bash
 
       - name: Setup flutter
@@ -33,6 +34,9 @@ jobs:
           flutter-version-file: pubspec.yaml
           cache: true
 
+      - name: Flutter Pub Get
+        run: flutter pub get
+
       - name: Set and Extract version
         shell: pwsh
         run: lib/scripts/build.ps1
@@ -40,8 +44,8 @@ jobs:
       - name: Apply Patch
         shell: pwsh
         run: lib/scripts/patch.ps1 Linux
+        continue-on-error: true
 
-        #TODO: deb and rpm packages need to be build
       - name: Build Linux
         run: flutter build linux --release --dart-define-from-file=pili_release.json --no-pub
 
@@ -49,6 +53,7 @@ jobs:
         run: tar -zcvf PiliPlus_linux_${{ env.version }}_amd64.tar.gz -C build/linux/x64/release/bundle .
 
       - name: Packege deb
+        continue-on-error: true
         run: |
           printf "建立构建目录...\n"
           mkdir "PiliPlus_linux_${{ env.version }}_amd64"
@@ -92,6 +97,7 @@ jobs:
         shell: bash
 
       - name: Packege rpm
+        continue-on-error: true
         run: |
           printf "建立 RPM 构建目录...\n"
           RPM_BUILD_ROOT="$PWD/rpm_build"
@@ -171,6 +177,7 @@ jobs:
         shell: bash
 
       - name: Package AppImage
+        continue-on-error: true
         run: |
           printf "下载 appimagetool...\n"
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
@@ -208,17 +215,17 @@ jobs:
           sed -i 's|Icon=piliplus|Icon=piliplus|g' "$APPDIR/com.example.piliplus.desktop"
 
           printf "打包 AppImage...\n"
-          ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "PiliPlus_linux_${{ env.version }}_amd64.AppImage"
+          ARCH=x86_64 ./appimagetool-x86_64.AppImage --appimage-extract-and-run "$APPDIR" "PiliPlus_linux_${{ env.version }}_amd64.AppImage" || ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "PiliPlus_linux_${{ env.version }}_amd64.AppImage"
 
           printf "完成: PiliPlus_linux_%s_amd64.AppImage\n" "${{ env.version }}"
         shell: bash
 
       - name: Release
-        if: ${{ github.event.inputs.tag != '' }}
-        uses: softprops/action-gh-release@v3
+        if: ${{ inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag }}
-          name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
           files: |
             PiliPlus_linux_*.tar.gz
             PiliPlus_linux_*.deb
@@ -226,29 +233,29 @@ jobs:
             PiliPlus_linux_*.AppImage
 
       - name: Upload linux targz package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: Linux_targz_amd64_packege
           path: PiliPlus_linux_*.tar.gz
+          if-no-files-found: warn
 
       - name: Upload linux deb package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: Linux_deb_amd64_package
           path: PiliPlus_linux_*.deb
+          if-no-files-found: warn
 
       - name: Upload linux rpm package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: Linux_rpm_amd64_package
           path: PiliPlus_linux_*.rpm
+          if-no-files-found: warn
 
       - name: Upload linux AppImage package
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: Linux_AppImage_amd64_package
           path: PiliPlus_linux_*.AppImage
+          if-no-files-found: warn

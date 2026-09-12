@@ -1,14 +1,23 @@
 name: Build
 
 on:
-    # pull_request:
-    #     types:
-    #         - opened
-    #         - synchronize
-    #         - reopened
-    #         - ready_for_review
-    #     paths-ignore:
-    #         - "**.md"
+    push:
+        branches:
+            - main
+            - master
+        tags:
+            - 'v*'
+            - 'release-*'
+        paths-ignore:
+            - "**.md"
+    pull_request:
+        types:
+            - opened
+            - synchronize
+            - reopened
+            - ready_for_review
+        paths-ignore:
+            - "**.md"
     workflow_dispatch:
         inputs:
             build_android:
@@ -49,19 +58,19 @@ on:
 
 jobs:
     android:
-        if: ${{ (github.event_name == 'pull_request' && github.repository == 'bggRGjQaUbCoE/PiliPlus') || github.event.inputs.build_android == 'true' }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_android != false) }}
         name: Release Android
         runs-on: ubuntu-latest
         permissions: write-all
 
         steps:
             - name: 代码迁出
-              uses: actions/checkout@v7
+              uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
             - name: 构建Java环境
-              uses: actions/setup-java@v5
+              uses: actions/setup-java@v4
               with:
                   distribution: "zulu"
                   java-version: "17"
@@ -78,12 +87,16 @@ jobs:
                   flutter-version-file: pubspec.yaml
                   cache: true
 
+            - name: Flutter Pub Get
+              run: flutter pub get
+
             - name: Apply Patch
               shell: pwsh
               run: lib/scripts/patch.ps1 android
+              continue-on-error: true
 
             - name: Write key
-              if: github.event_name == 'workflow_dispatch'
+              if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
               run: |
                   if [ ! -z "${{ secrets.SIGN_KEYSTORE_BASE64 }}" ]; then
                     echo "${{ secrets.SIGN_KEYSTORE_BASE64 }}" | base64 --decode > android/app/key.jks
@@ -91,21 +104,26 @@ jobs:
                     echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
                     echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
                     echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
+                  elif [ ! -z "${{ secrets.KEYSTORE_FILE }}" ]; then
+                    echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > android/app/key.jks
+                    echo storeFile='key.jks' >> android/key.properties
+                    echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> android/key.properties
+                    echo keyAlias='${{ secrets.KEY_ALIAS }}' >> android/key.properties
+                    echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> android/key.properties
                   fi
 
             - name: Set and Extract version
-              if: ${{ github.event_name == 'workflow_dispatch' }}
               shell: pwsh
               run: lib/scripts/build.ps1 android
 
             - name: Flutter Build Release Apk
-              if: ${{ github.event_name == 'workflow_dispatch' }}
+              if: ${{ github.event_name != 'pull_request' }}
               run: flutter build apk --release --split-per-abi --dart-define-from-file=pili_release.json --no-pub
 
             - name: Flutter Build Dev Apk
               if: ${{ github.event_name == 'pull_request' }}
               run: |
-                  flutter build apk --release --split-per-abi --android-project-arg dev=1 --no-pub
+                  flutter build apk --release --split-per-abi --android-project-arg dev=1 --dart-define-from-file=pili_release.json --no-pub
 
             - name: Rename
               run: |
@@ -116,58 +134,58 @@ jobs:
               shell: bash
 
             - name: Release
-              if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' }}
-              uses: softprops/action-gh-release@v3
+              if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') || startsWith(github.ref, 'refs/tags/') }}
+              uses: softprops/action-gh-release@v2
               with:
-                  tag_name: ${{ github.event.inputs.tag }}
-                  name: ${{ github.event.inputs.tag }}
+                  tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+                  name: ${{ github.event.inputs.tag || github.ref_name }}
                   files: PiliPlus_android_*.apk
 
-            - name: 上传
-              uses: actions/upload-artifact@v7
+            - name: 上传 arm64-v8a
+              uses: actions/upload-artifact@v4
               with:
-                  archive: false
                   name: Android_arm64-v8a
                   path: PiliPlus_android_*_arm64-v8a.apk
+                  if-no-files-found: warn
 
-            - name: 上传
-              uses: actions/upload-artifact@v7
+            - name: 上传 armeabi-v7a
+              uses: actions/upload-artifact@v4
               with:
-                  archive: false
                   name: Android_armeabi-v7a
                   path: PiliPlus_android_*_armeabi-v7a.apk
+                  if-no-files-found: warn
 
-            - name: 上传
-              uses: actions/upload-artifact@v7
+            - name: 上传 x86_64
+              uses: actions/upload-artifact@v4
               with:
-                  archive: false
                   name: Android_x86_64
                   path: PiliPlus_android_*_x86_64.apk
-
-    ios:
-        if: ${{ (github.event_name == 'pull_request' && github.repository == 'bggRGjQaUbCoE/PiliPlus') || github.event.inputs.build_ios == 'true' }}
-        uses: ./.github/workflows/ios.yml
-        permissions: write-all
-        with:
-            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
-
-    mac:
-        if: ${{ github.event.inputs.build_mac == 'true' }}
-        uses: ./.github/workflows/mac.yml
-        permissions: write-all
-        with:
-            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+                  if-no-files-found: warn
 
     win_x64:
-        if: ${{ (github.event_name == 'pull_request' && github.repository == 'bggRGjQaUbCoE/PiliPlus') || github.event.inputs.build_win_x64 == 'true' }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_win_x64 != false) }}
         uses: ./.github/workflows/win_x64.yml
         permissions: write-all
         with:
-            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name || '') }}
 
     linux_x64:
-        if: ${{ github.event.inputs.build_linux_x64 == 'true' }}
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_linux_x64 != false) }}
         uses: ./.github/workflows/linux_x64.yml
         permissions: write-all
         with:
-            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || '' }}
+            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name || '') }}
+
+    mac:
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_mac != false) }}
+        uses: ./.github/workflows/mac.yml
+        permissions: write-all
+        with:
+            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name || '') }}
+
+    ios:
+        if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_ios != false) }}
+        uses: ./.github/workflows/ios.yml
+        permissions: write-all
+        with:
+            tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name || '') }}

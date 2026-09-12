@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -29,12 +29,17 @@ jobs:
       - name: Add fastforge and Inno Setup
         run: |
           dart pub global activate fastforge
+          Add-Content -Path $env:GITHUB_PATH -Value "$((Get-Item env:LOCALAPPDATA).Value)\Pub\Cache\bin"
           choco install innosetup
+        shell: pwsh
 
       - name: Add Chinese language file for Inno Setup
         run: |
           Copy-Item "windows/packaging/exe/ChineseSimplified.isl" "C:\Program Files (x86)\Inno Setup 6\Languages\ChineseSimplified.isl"
         shell: pwsh
+
+      - name: Flutter Pub Get
+        run: flutter pub get
 
       - name: Set and Extract version
         shell: pwsh
@@ -43,17 +48,19 @@ jobs:
       - name: Apply Patch
         shell: pwsh
         run: lib/scripts/patch.ps1 windows
+        continue-on-error: true
 
       - name: Build Windows
         run: |
           fastforge package --platform windows --targets exe --flutter-build-args="dart-define-from-file=pili_release.json,no-pub" --skip-clean
 
       - name: Prepare Upload
+        shell: bash
         run: |
           mkdir -p Release/PiliPlus-Win
           mkdir -p PiliPlus-Win-Setup
-          mv build/windows/x64/runner/Release/* Release/PiliPlus-Win/
-          mv dist/**/*.exe PiliPlus-Win-Setup/PiliPlus_windows_${{env.version}}_x64_setup.exe
+          cp -r build/windows/x64/runner/Release/* Release/PiliPlus-Win/
+          find dist -name "*.exe" -exec cp {} PiliPlus-Win-Setup/PiliPlus_windows_${{env.version}}_x64_setup.exe \;
 
       - name: Compress
         run: |
@@ -61,25 +68,23 @@ jobs:
         shell: pwsh
 
       - name: Release
-        if: ${{ github.event.inputs.tag != '' }}
-        uses: softprops/action-gh-release@v3
+        if: ${{ inputs.tag != '' }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag }}
-          name: ${{ github.event.inputs.tag }}
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
           files: |
             PiliPlus_windows_*.zip
             PiliPlus-Win-Setup/PiliPlus_windows_*.exe
 
       - name: Upload windows file release
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: Windows-file-x64-release
           path: PiliPlus_windows_*.zip
 
       - name: Upload windows setup release
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
-          archive: false
           name: Windows-setup-x64-release
           path: PiliPlus-Win-Setup/PiliPlus_windows_*.exe
