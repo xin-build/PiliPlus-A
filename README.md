@@ -8,9 +8,9 @@
     <h1>PiliPlus</h1>
 <div align="center">
     
-![GitHub repo size](https://img.shields.io/github/repo-size/bggRGjQaUbCoE/PiliPlus) 
-![GitHub Repo stars](https://img.shields.io/github/stars/bggRGjQaUbCoE/PiliPlus) 
-![GitHub all releases](https://img.shields.io/github/downloads/bggRGjQaUbCoE/PiliPlus/total) 
+![GitHub repo size](https://img.shields.io/github/repo-size/xin-build/PiliPlus-A) 
+![GitHub Repo stars](https://img.shields.io/github/stars/xin-build/PiliPlus-A) 
+![GitHub all releases](https://img.shields.io/github/downloads/xin-build/PiliPlus-A/total) 
 </div>
     <p>使用Flutter开发的BiliBili第三方客户端</p>
     
@@ -270,16 +270,4 @@
 
 本项目遵循 [GNU General Public License v3.0 (GPLv3)](LICENSE) 协议开源。
 
-<br/>
-<br/>
-<br/>
 
-## Star History
-
-<a href="https://star-history.dera.page/#bggRGjQaUbCoE/PiliPlus&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
- </picture>
-</a>
