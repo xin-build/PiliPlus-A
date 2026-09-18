@@ -145,12 +145,16 @@ void main() async {
       setupServiceLocator(),
     ]);
   } else if (Platform.isWindows) {
-    if (await WebViewEnvironment.getAvailableVersion() != null) {
-      webViewEnvironment = await WebViewEnvironment.create(
-        settings: WebViewEnvironmentSettings(
-          userDataFolder: path.join(appSupportDirPath, 'flutter_inappwebview'),
-        ),
-      );
+    try {
+      if (await WebViewEnvironment.getAvailableVersion() != null) {
+        webViewEnvironment = await WebViewEnvironment.create(
+          settings: WebViewEnvironmentSettings(
+            userDataFolder: path.join(appSupportDirPath, 'flutter_inappwebview'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('WebViewEnvironment init error: $e');
     }
   } else if (Platform.isMacOS) {
     await setupServiceLocator();

@@ -224,7 +224,7 @@ class _MainAppState extends PopScopeState<MainApp>
     }
   }
 
-  double? _opacity;
+  double? _opacity = 1.0;
 
   Future<void>? _setOpacity(double opacity) {
     if (Platform.isWindows && _opacity != opacity) {

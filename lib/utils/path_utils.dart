@@ -26,7 +26,10 @@ abstract final class PathUtils {
     List<String> shaders,
   ) {
     return shaders
-        .map((shader) => path.join(baseDirectory, shader))
+        .map((shader) {
+          final p = path.join(baseDirectory, shader);
+          return Platform.isWindows ? p.replaceAll(r'\', '/') : p;
+        })
         .join(Platform.isWindows ? ';' : ':');
   }
 

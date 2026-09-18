@@ -784,9 +784,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       'volume-max': kMaxVolume.toString(),
       'stream-lavf-o': 'reconnect=1,reconnect_max_retries=${Pref.retryCount}',
       if (Platform.isWindows) ...{
-        'demuxer-max-bytes': '67108864',
-        'demuxer-max-back-bytes': '33554432',
-        if (tmpDirPath.isNotEmpty) 'gpu-shader-cache-dir': tmpDirPath,
+        'demuxer-max-bytes': '209715200', // 200MB
+        'demuxer-max-back-bytes': '67108864', // 64MB
       },
     };
     final autosync = Pref.autosync;
