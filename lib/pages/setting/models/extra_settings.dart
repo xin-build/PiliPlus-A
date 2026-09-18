@@ -774,6 +774,13 @@ void _showDownPathDialog(BuildContext context, VoidCallback setState) {
         DialogOption(
           onPressed: () {
             Get.back();
+            PathUtils.openDir(downloadPath);
+          },
+          child: const Text('打开'),
+        ),
+        DialogOption(
+          onPressed: () {
+            Get.back();
             Utils.copyText(downloadPath);
           },
           child: const Text('复制', style: TextStyle(fontSize: 14)),
@@ -794,7 +801,11 @@ void _showDownPathDialog(BuildContext context, VoidCallback setState) {
         DialogOption(
           onPressed: () async {
             Get.back();
-            final path = await FilePicker.getDirectoryPath();
+            final path = await FilePicker.getDirectoryPath(
+              initialDirectory: Directory(downloadPath).existsSync()
+                  ? downloadPath
+                  : null,
+            );
             if (path == null || path == downloadPath) return;
             await _applyDownloadPath(
               path,

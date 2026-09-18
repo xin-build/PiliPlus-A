@@ -83,7 +83,7 @@ class _SearchResultPageState extends State<SearchResultPage>
         title: GestureDetector(
           onTap: () {
             if (_isFromSearch) {
-              Get.back();
+              Get.back(result: true);
             } else {
               Get.offNamed(
                 '/search',

@@ -261,8 +261,7 @@ abstract final class Api {
   static const String searchDefault = '/x/web-interface/wbi/search/default';
 
   // 搜索关键词
-  static const String searchSuggest =
-      'https://s.search.bilibili.com/main/suggest';
+  static const String searchSuggest = '/x/web-interface/suggest';
 
   // 分类搜索
   static const String searchByType = '/x/web-interface/wbi/search/type';
@@ -411,7 +410,7 @@ abstract final class Api {
 
   // github 获取最新版
   static const String latestApp =
-      'https://api.github.com/repos/bggRGjQaUbCoE/PiliPlus/releases';
+      'https://api.github.com/repos/xin-build/PiliPlus-A/releases';
 
   // 多少人在看
   // https://api.bilibili.com/x/player/online/total?aid=913663681&cid=1203559746&bvid=BV1MM4y1s7NZ&ts=56427838

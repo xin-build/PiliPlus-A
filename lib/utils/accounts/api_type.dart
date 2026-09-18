@@ -37,6 +37,7 @@ abstract final class ApiType {
       Api.liveRoomDmToken,
       Api.liveRoomDmPrefetch,
       Api.superChatMsg,
+      Api.getLiveInfoByUser,
 
       // Api.memberInfo,
       // Api.bgmDetail,

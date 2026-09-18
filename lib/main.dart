@@ -110,14 +110,19 @@ Future<void> _initAppPath() async {
 
 void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized();
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 200 * 1024 * 1024; // 200MB limit
-  PaintingBinding.instance.imageCache.maximumSize = 1000;
+  if (PlatformUtils.isMobile) {
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 96 * 1024 * 1024; // 96MB limit on mobile
+    PaintingBinding.instance.imageCache.maximumSize = 250;
+  } else {
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 160 * 1024 * 1024; // 160MB limit on desktop
+    PaintingBinding.instance.imageCache.maximumSize = 500;
+  }
   MediaKit.ensureInitialized();
   await _initAppPath();
   try {
     await GStorage.init();
   } catch (e) {
-    await Utils.copyText(e.toString());
+    await Utils.copyText(e.toString(), needToast: false);
     if (kDebugMode) debugPrint('GStorage init error: $e');
     exit(0);
   }
@@ -211,6 +216,18 @@ void main() async {
     await MyApp.initPlatformState();
   }
 
+  FlutterError.onError = (FlutterErrorDetails details) {
+    if (kDebugMode) {
+      FlutterError.dumpErrorToConsole(details);
+    }
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    if (kDebugMode) {
+      debugPrint('Global async error intercepted: $error\n$stack');
+    }
+    return true;
+  };
+
   if (Pref.enableLog) {
     // 异常捕获 logo记录
     final customParameters = {
@@ -302,20 +319,30 @@ class MyApp extends StatelessWidget {
 
   static (ThemeData, ThemeData) getAllTheme() {
     final dynamicColor = _light != null && _dark != null && Pref.dynamicColor;
-    late final brandColor = colorThemeTypes[Pref.customColor].color;
-    late final variant = Pref.schemeVariant;
+
+    final ColorScheme lightScheme, darkScheme;
+    if (dynamicColor) {
+      lightScheme = _light!;
+      darkScheme = _dark!;
+    } else {
+      final customColor = Pref.customColor;
+      final brandColor =
+          colorThemeTypes.elementAtOrNull(customColor)?.color ??
+          Color(customColor);
+      final variant = Pref.schemeVariant;
+
+      lightScheme = brandColor.asColorSchemeSeed(variant, .light);
+      darkScheme = brandColor.asColorSchemeSeed(variant, .dark);
+    }
+
     return (
       ThemeUtils.lightTheme = ThemeUtils.getThemeData(
-        colorScheme: dynamicColor
-            ? _light!
-            : brandColor.asColorSchemeSeed(variant, .light),
+        colorScheme: lightScheme,
         isDynamic: dynamicColor,
       ),
       ThemeUtils.darkTheme = ThemeUtils.getThemeData(
         isDark: true,
-        colorScheme: dynamicColor
-            ? _dark!
-            : brandColor.asColorSchemeSeed(variant, .dark),
+        colorScheme: darkScheme,
         isDynamic: dynamicColor,
       ),
     );
