@@ -177,7 +177,7 @@ foreach ($revert in $reverts) {
 }
 
 foreach ($patch in $patches) {
-    git apply "$env:GITHUB_WORKSPACE/$patch"
+    git apply -C1 --ignore-whitespace "$env:GITHUB_WORKSPACE/$patch"
     if ($LASTEXITCODE -eq 0) {
         Write-Host "$patch applied"
     } else {
@@ -261,7 +261,7 @@ Get-ChildItem -Path "$env:GITHUB_WORKSPACE/lib/scripts/material" -Filter *.patch
 cd $MaterialUiDir.FullName
 
 foreach ($patch in $patches_material) {
-    git apply "$env:GITHUB_WORKSPACE/$patch"
+    git apply -C1 --ignore-whitespace "$env:GITHUB_WORKSPACE/$patch"
     if ($LASTEXITCODE -eq 0) {
         Write-Host "$patch applied"
     } else {
@@ -306,7 +306,7 @@ Get-ChildItem -Path "$env:GITHUB_WORKSPACE/lib/scripts/cupertino" -Filter *.patc
 cd $CupertinoUiDir.FullName
 
 foreach ($patch in $patches_cupertino) {
-    git apply "$env:GITHUB_WORKSPACE/$patch"
+    git apply -C1 --ignore-whitespace "$env:GITHUB_WORKSPACE/$patch"
     if ($LASTEXITCODE -eq 0) {
         Write-Host "$patch applied"
     } else {

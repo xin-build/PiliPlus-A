@@ -786,6 +786,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       if (Platform.isWindows) ...{
         'demuxer-max-bytes': '209715200', // 200MB
         'demuxer-max-back-bytes': '67108864', // 64MB
+        'framedrop': 'vo',
+        'hr-seek-framedrop': 'yes',
       },
     };
     final autosync = Pref.autosync;
@@ -854,8 +856,13 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         'cache': 'no'
       else if (isLive)
         ...liveBuffer
-      else
+      else ...{
         ...buffer,
+        if (Platform.isWindows) ...{
+          'demuxer-max-bytes': (Pref.bufferSize * 0x100000).clamp(209715200.0, double.infinity).toInt().toString(),
+          'demuxer-max-back-bytes': (64.0 * 0x100000).toInt().toString(),
+        },
+      },
     };
 
     String video = dataSource.videoSource;

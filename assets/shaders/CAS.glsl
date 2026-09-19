@@ -1,4 +1,4 @@
-﻿// FidelityFX Contrast Adaptive Sharpening (CAS) for MPV
+// FidelityFX Contrast Adaptive Sharpening (CAS) for MPV
 //!DESC AMD FidelityFX Contrast Adaptive Sharpening (CAS)
 //!HOOK MAIN
 //!BIND HOOKED
@@ -29,9 +29,9 @@ vec4 hook() {
     max_rgb += max_rgb2;
 
     // Smooth filter ratio
-    vec3 rcp_max_rgb = vec3(1.0) / max_rgb;
+    vec3 rcp_max_rgb = vec3(1.0) / max(max_rgb, vec3(1e-5));
     vec3 amp_rgb = clamp(min(min_rgb, 2.0 - max_rgb) * rcp_max_rgb, 0.0, 1.0);
-    amp_rgb = inversesqrt(amp_rgb);
+    amp_rgb = inversesqrt(max(amp_rgb, vec3(1e-5)));
 
     float peak = -3.0 * SHARPENING + 8.0;
     vec3 w_rgb = -vec3(1.0) / (amp_rgb * peak);

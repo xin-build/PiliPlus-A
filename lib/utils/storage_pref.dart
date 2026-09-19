@@ -267,7 +267,7 @@ abstract final class Pref {
   );
 
   static String get videoSync =>
-      _setting.get(SettingBoxKey.videoSync, defaultValue: 'display-resample');
+      _setting.get(SettingBoxKey.videoSync, defaultValue: Platform.isWindows ? 'audio' : 'display-resample');
 
   static String get autosync => _setting.get(
     SettingBoxKey.autosync,
@@ -824,8 +824,9 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.enableLongShowControl, defaultValue: false);
 
   static double get bufferSize {
-    final val = _setting.get(SettingBoxKey.bufferSize, defaultValue: 64.0);
-    return val < 32.0 ? 64.0 : val;
+    final defaultBuf = PlatformUtils.isMobile ? 64.0 : 192.0;
+    final val = _setting.get(SettingBoxKey.bufferSize, defaultValue: defaultBuf);
+    return val < 32.0 ? defaultBuf : val;
   }
 
   static double get bufferSec {

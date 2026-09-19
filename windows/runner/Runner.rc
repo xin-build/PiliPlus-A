@@ -94,7 +94,7 @@ BEGIN
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "PiliPlus-A" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 xin-build. All rights reserved." "\0"
-            VALUE "OriginalFilename", "piliplus.exe" "\0"
+            VALUE "OriginalFilename", "PiliPlus-A.exe" "\0"
             VALUE "ProductName", "PiliPlus-A" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END

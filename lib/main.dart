@@ -211,6 +211,7 @@ void main() async {
         await calcWindowPosition(windowSize) & windowSize,
       );
       if (Pref.isWindowMaximized) await windowManager.maximize();
+      await windowManager.setTitle(Constants.appName);
       await windowManager.show();
       await windowManager.focus();
     });

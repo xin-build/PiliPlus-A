@@ -29,7 +29,7 @@ class AppBarAni extends StatelessWidget {
       Colors.transparent,
       Color(0xBF000000),
     ],
-    tileMode: TileMode.mirror,
+    tileMode: TileMode.clamp,
   );
 
   static final _bottomPos = Tween<Offset>(
@@ -44,7 +44,7 @@ class AppBarAni extends StatelessWidget {
       Colors.transparent,
       Color(0xBF000000),
     ],
-    tileMode: TileMode.mirror,
+    tileMode: TileMode.clamp,
   );
 
   @override
