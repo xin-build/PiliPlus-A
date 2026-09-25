@@ -9,13 +9,28 @@ try {
 
     $commitHash = (git rev-parse HEAD).Trim()
 
+    # Detect release version from tag if available (e.g. v2.1.4.1 or release-2.1.4.1)
+    $tagVersion = $null
+    $targetTag = if ($env:tag) { $env:tag } elseif ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { $null }
+    if ($targetTag -and ($targetTag -match 'v?(\d+\.\d+\.\d+(\.\d+)?)')) {
+        $tagVersion = $matches[1]
+    }
+
     $updatedContent = foreach ($line in (Get-Content -Path 'pubspec.yaml' -Encoding UTF8)) {
-        if ($line -match '^\s*version:\s*([\d\.]+)') {
-            $versionName = $matches[1]
+        if ($line -match '^\s*version:\s*([^\+\s]+)') {
+            $rawPubVersion = $matches[1]
+            if ($rawPubVersion -match '^(\d+\.\d+\.\d+)') {
+                $semverPubVersion = $matches[1]
+            } else {
+                $semverPubVersion = $rawPubVersion
+            }
+            $versionName = if ($tagVersion) { $tagVersion } else { $semverPubVersion }
             if ($Arg -eq 'android') {
                 $versionName += '-' + $commitHash.Substring(0, 9)
             }
-            "version: $versionName+$versionCode"
+            # pubspec.yaml MUST remain valid 3-part SemVer (X.Y.Z+build)
+            # otherwise Flutter build/pub tools fail with 'Invalid version number'
+            "version: $semverPubVersion+$versionCode"
         }
         else {
             $line
@@ -26,7 +41,8 @@ try {
         throw 'version not found'
     }
 
-    $updatedContent | Set-Content -Path 'pubspec.yaml' -Encoding UTF8
+    $pubspecPath = (Resolve-Path 'pubspec.yaml').Path
+    [System.IO.File]::WriteAllLines($pubspecPath, [string[]]$updatedContent, [System.Text.UTF8Encoding]::new($false))
 
     $buildTime = [int]([DateTimeOffset]::Now.ToUnixTimeSeconds())
 

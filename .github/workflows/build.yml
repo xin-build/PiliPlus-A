@@ -115,6 +115,8 @@ jobs:
             - name: Set and Extract version
               shell: pwsh
               run: lib/scripts/build.ps1 android
+              env:
+                tag: ${{ github.event.inputs.tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name || '') }}
 
             - name: Flutter Build Release Apk
               if: ${{ github.event_name != 'pull_request' }}

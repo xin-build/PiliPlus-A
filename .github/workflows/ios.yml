@@ -33,6 +33,8 @@ jobs:
       - name: Set and Extract version
         shell: pwsh
         run: lib/scripts/build.ps1
+        env:
+          tag: ${{ inputs.tag }}
 
       - name: Apply Patch
         shell: pwsh
