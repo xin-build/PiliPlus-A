@@ -171,14 +171,14 @@ zip -r9 PiliPlus-A_ios.ipa Payload
 
 ### 1. 自动打标签发布
 
-只需推送符合规范的版本标签（如 `v2.1.4`、`release-2.1.4`），CI 会自动触发并在编译成功后把全平台 11 个安装包一并关联至该 Release：
+只需推送符合规范的版本标签（如 `v2.1.4.1`、`release-2.1.4.1`），CI 会自动触发并在编译成功后把全平台 11 个安装包一并关联至该 Release：
 
 ```bash
 # 创建版本标签
-git tag v2.1.4
+git tag v2.1.4.1
 
 # 推送标签至 GitHub 仓库
-git push origin v2.1.4
+git push origin v2.1.4.1
 ```
 
 GitHub Actions 将自动执行：

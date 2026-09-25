@@ -359,6 +359,7 @@ class VideoDetailController extends GetxController
   @override
   void onInit() {
     super.onInit();
+    PaintingBinding.instance.imageCache.clearLiveImages();
     args = Get.arguments;
     videoType = args['videoType'];
     if (videoType == VideoType.pgc) {
@@ -1393,6 +1394,7 @@ class VideoDetailController extends GetxController
       ..dispose();
     subtitles.clear();
     vttSubtitles.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
     super.onClose();
   }
 

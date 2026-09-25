@@ -3,7 +3,7 @@ import 'dart:io' show Platform;
 
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/user.dart';
-import 'package:PiliPlus/main.dart' show webViewEnvironment;
+import 'package:PiliPlus/main.dart' show webViewEnvironment, initWebViewEnvironment;
 import 'package:PiliPlus/services/account_service.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
@@ -19,8 +19,11 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
 abstract final class LoginUtils {
-  static FutureOr setWebCookie([Account? account]) {
+  static FutureOr setWebCookie([Account? account]) async {
     if (Platform.isLinux) return null;
+    if (Platform.isWindows) {
+      await initWebViewEnvironment();
+    }
     final cookies = (account ?? Accounts.main).cookieJar.toList();
     final webManager = web.CookieManager.instance(
       webViewEnvironment: webViewEnvironment,
@@ -78,12 +81,16 @@ abstract final class LoginUtils {
     }
   }
 
-  static Future<void> onLogoutMain() {
+  static Future<void> onLogoutMain() async {
     Get.find<AccountService>()
       ..face.value = ''
       ..isLogin.value = false;
 
-    return Future.wait([
+    if (Platform.isWindows) {
+      await initWebViewEnvironment();
+    }
+
+    await Future.wait([
       if (Platform.isLinux)
         LinuxCookieManager.deleteAllCookies()
       else

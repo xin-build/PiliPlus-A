@@ -50,6 +50,25 @@ import 'package:window_manager/window_manager.dart' hide calcWindowPosition;
 
 WebViewEnvironment? webViewEnvironment;
 
+Future<WebViewEnvironment?> initWebViewEnvironment() async {
+  if (webViewEnvironment != null) return webViewEnvironment;
+  if (Platform.isWindows) {
+    try {
+      if (await WebViewEnvironment.getAvailableVersion() != null) {
+        webViewEnvironment = await WebViewEnvironment.create(
+          settings: WebViewEnvironmentSettings(
+            userDataFolder: path.join(appSupportDirPath, 'flutter_inappwebview'),
+            additionalBrowserArguments: '--disable-gpu --disable-gpu-compositing',
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('WebViewEnvironment init error: $e');
+    }
+  }
+  return webViewEnvironment;
+}
+
 EdgeInsets? tmpPadding;
 
 Future<void> _initDownPath() async {
@@ -111,11 +130,11 @@ Future<void> _initAppPath() async {
 void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized();
   if (PlatformUtils.isMobile) {
-    PaintingBinding.instance.imageCache.maximumSizeBytes = 96 * 1024 * 1024; // 96MB limit on mobile
-    PaintingBinding.instance.imageCache.maximumSize = 250;
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 64 * 1024 * 1024; // 64MB limit on mobile
+    PaintingBinding.instance.imageCache.maximumSize = 150;
   } else {
-    PaintingBinding.instance.imageCache.maximumSizeBytes = 160 * 1024 * 1024; // 160MB limit on desktop
-    PaintingBinding.instance.imageCache.maximumSize = 500;
+    PaintingBinding.instance.imageCache.maximumSizeBytes = 48 * 1024 * 1024; // 48MB limit on desktop
+    PaintingBinding.instance.imageCache.maximumSize = 100;
   }
   MediaKit.ensureInitialized();
   await _initAppPath();
@@ -145,17 +164,8 @@ void main() async {
       setupServiceLocator(),
     ]);
   } else if (Platform.isWindows) {
-    try {
-      if (await WebViewEnvironment.getAvailableVersion() != null) {
-        webViewEnvironment = await WebViewEnvironment.create(
-          settings: WebViewEnvironmentSettings(
-            userDataFolder: path.join(appSupportDirPath, 'flutter_inappwebview'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (kDebugMode) debugPrint('WebViewEnvironment init error: $e');
-    }
+    // WebViewEnvironment is lazily initialized on-demand via initWebViewEnvironment()
+    // with GPU disabled to eliminate background GPU VRAM consumption.
   } else if (Platform.isMacOS) {
     await setupServiceLocator();
   }

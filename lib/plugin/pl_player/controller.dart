@@ -783,9 +783,23 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
               .toString(),
       'volume-max': kMaxVolume.toString(),
       'stream-lavf-o': 'reconnect=1,reconnect_max_retries=${Pref.retryCount}',
+      if (PlatformUtils.isDesktop) ...{
+        'fbo-format': 'rgba8',
+        'scale': 'bilinear',
+        'cscale': 'bilinear',
+        'dscale': 'bilinear',
+        'correct-downscaling': 'no',
+        'linear-downscaling': 'no',
+        'sigmoid-upscaling': 'no',
+        'hdr-compute-peak': 'no',
+        'allow-delayed-peak-detect': 'yes',
+        'hwdec-extra-frames': '4',
+        'swapchain-depth': '2',
+        'vd-lavc-dr': 'yes',
+      },
       if (Platform.isWindows) ...{
-        'demuxer-max-bytes': '209715200', // 200MB
-        'demuxer-max-back-bytes': '67108864', // 64MB
+        'demuxer-max-bytes': '134217728', // 128MB
+        'demuxer-max-back-bytes': '33554432', // 32MB
         'framedrop': 'vo',
         'hr-seek-framedrop': 'yes',
       },
@@ -859,8 +873,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       else ...{
         ...buffer,
         if (Platform.isWindows) ...{
-          'demuxer-max-bytes': (Pref.bufferSize * 0x100000).clamp(209715200.0, double.infinity).toInt().toString(),
-          'demuxer-max-back-bytes': (64.0 * 0x100000).toInt().toString(),
+          'demuxer-max-bytes': (Pref.bufferSize * 0x100000).clamp(67108864.0, 268435456.0).toInt().toString(),
+          'demuxer-max-back-bytes': (32.0 * 0x100000).toInt().toString(),
         },
       },
     };
@@ -1650,9 +1664,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     _disableAutoEnterPip();
     setPlayCallBack(null);
     dmState.clear();
-    if (showSeekPreview) {
-      _clearPreview();
-    }
+    _clearPreview();
+    PaintingBinding.instance.imageCache.clearLiveImages();
     if (Platform.isAndroid) {
       AndroidHelper$ToDart.onUserLeaveHint?.release();
       AndroidHelper$ToDart.onUserLeaveHint = null;

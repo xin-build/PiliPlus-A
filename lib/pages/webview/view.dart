@@ -4,7 +4,7 @@ import 'package:PiliPlus/common/widgets/route_aware_mixin.dart'
     show routeObserver;
 import 'package:PiliPlus/common/widgets/selection_text.dart';
 import 'package:PiliPlus/http/browser_ua.dart';
-import 'package:PiliPlus/main.dart' show webViewEnvironment;
+import 'package:PiliPlus/main.dart' show webViewEnvironment, initWebViewEnvironment;
 import 'package:PiliPlus/models/common/webview_menu_type.dart';
 import 'package:PiliPlus/utils/app_scheme.dart';
 import 'package:PiliPlus/utils/cache_manager.dart';
@@ -71,6 +71,10 @@ class _WebviewPageState extends State<WebviewPage> with RouteAware {
 
     if (Platform.isAndroid) {
       routeObserver.subscribe(this, Get.routing.route as GetPageRoute);
+    } else if (Platform.isWindows) {
+      initWebViewEnvironment().then((_) {
+        if (mounted) setState(() {});
+      });
     }
   }
 

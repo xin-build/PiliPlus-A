@@ -9,9 +9,7 @@ class GpuAccelerationManager {
   static final GpuAccelerationManager instance = GpuAccelerationManager._internal();
   GpuAccelerationManager._internal();
 
-  bool _gpuEnabled = true;
-  bool get isGpuEnabled => _gpuEnabled;
-  set isGpuEnabled(bool val) => _gpuEnabled = val;
+  bool isGpuEnabled = true;
 
   bool get isGpuSupported => NativeGpuCompute.isSupported;
 
