@@ -51,8 +51,8 @@ class MpvConvertWebp {
         'of': 'webp',
         'ovc': 'libwebp_anim',
         'ofopts': 'loop=0',
-        'ovcopts': 'preset=${preset.flag},compression_level=6',
-        'vf': 'fps=12',
+        'ovcopts': 'preset=${preset.flag}',
+        if (enableHA) 'vo': 'gpu',
         if (enableHA) 'hwdec': '${Pref.hardwareDecoding},auto-copy', // transcode only support copy
       },
     );
@@ -77,7 +77,7 @@ class MpvConvertWebp {
 
   void dispose() {
     Initializer.dispose(_ctx);
-    Timer(const Duration(seconds: 5), () => _mpv.mpv_terminate_destroy(_ctx));
+    _mpv.mpv_terminate_destroy(_ctx);
     if (!_completer.isCompleted) _completer.complete(false);
   }
 

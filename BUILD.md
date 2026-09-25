@@ -28,7 +28,7 @@
 
 | 工具 / SDK | 建议版本 | 适用平台 |
 | :--- | :--- | :--- |
-| **Flutter SDK** | **3.47.4 (Stable)** | 全平台通用 |
+| **Flutter SDK** | **3.47.5 (Stable)** | 全平台通用 |
 | **Dart SDK** | 3.12.0+ (内置于 Flutter) | 全平台通用 |
 | **PowerShell** | 7.0+ (pwsh) 或 Windows PowerShell 5.1 | 执行 build.ps1 / patch.ps1 脚本 |
 | **JDK (Java)** | 17 (推荐 Zulu JDK 或 Temurin) | Android |
@@ -222,10 +222,10 @@ GitHub Actions 将自动执行：
 ## 六、常见问题与注意事项
 
 1. **`flutter-action` 版本下载报错**：
-   - 请保持 `pubspec.yaml` 中 `environment.flutter: 3.47.4` 精确版本号写法，勿加 `>=` 或 `^` 符号。
+   - 请保持 `pubspec.yaml` 中 `environment.flutter: 3.47.5` 精确版本号写法，勿加 `>=` 或 `^` 符号。
 2. **`pubspec.yaml` 版本规范与发布标签**：
-   - `pubspec.yaml` 中的 `version:` 字段受 Dart 包管理器严格约束，必须保持标准三段式 SemVer 格式（例如 `2.1.4+2`），切勿使用非标准四段式（如 `2.1.4.1+1`）。
-   - CI 构建脚本 `build.ps1` 会自动从 Git 标签（例如 `v2.1.4.1`）提取发布版本号，并在各平台安装包与内置关于信息中正确注入 `2.1.4.1`。
+   - `pubspec.yaml` 中的 `version:` 字段受 Dart 包管理器严格约束，必须保持标准三段式 SemVer 格式（例如 `2.1.5+1`），切勿使用非标准四段式（如 `2.1.5.1+1`）。
+   - CI 构建脚本 `build.ps1` 会自动从 Git 标签（例如 `v2.1.5`）提取发布版本号，并在各平台安装包与内置关于信息中正确注入版本标识。
 3. **`patch.ps1` 提示找不到 cupertino_ui**：
    - 执行 patch 之前必须先执行 `flutter pub get`，确保缓存中有相关组件包。
 4. **Android 签名配置**：
