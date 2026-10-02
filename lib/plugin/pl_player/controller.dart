@@ -781,7 +781,11 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
           (PlatformUtils.isMobile ? Pref.playerVolume : volume.value * 100)
               .toString(),
       'volume-max': kMaxVolume.toString(),
-      'stream-lavf-o': 'reconnect=1,reconnect_max_retries=${Pref.retryCount}',
+      'audio-stream-silence': 'yes',
+      'audio-wait-open': '0.2',
+      'gapless-audio': 'yes',
+      'stream-lavf-o':
+          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=4xx,5xx',
       if (PlatformUtils.isDesktop) ...{
         'fbo-format': 'rgba8',
         'scale': 'bilinear',
@@ -876,6 +880,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
           'demuxer-max-back-bytes': (32.0 * 0x100000).toInt().toString(),
         },
       },
+      'stream-lavf-o':
+          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=4xx,5xx',
     };
 
     String video = dataSource.videoSource;
@@ -888,10 +894,10 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
             ('edl://'
             '!no_chapters;'
             // '!delay_open,media_type=video;'
-            '%${isFileSource ? utf8.encode(video).length : video.length}%$video;'
+            '%${utf8.encode(video).length}%$video;'
             '!new_stream;!no_chapters;'
             // '!delay_open,media_type=audio;'
-            '%${isFileSource ? utf8.encode(audio).length : audio.length}%$audio');
+            '%${utf8.encode(audio).length}%$audio');
       }
       audioFilterExtras(volume, map: extras);
     }
@@ -1107,9 +1113,10 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
                 // if (kDebugMode) {
                 //   debugPrint("_buffered.value: ${_buffered.value}");
                 // }
-                if (isBuffering.value && buffered.value == 0) {
+                if ((isBuffering.value && buffered.value == 0) ||
+                    playerStatus.isPlaying) {
                   SmartDialog.showToast(
-                    '视频链接打开失败，重试中',
+                    '网络连接异常，自动重连中',
                     displayTime: const Duration(milliseconds: 500),
                   );
                   refreshPlayer();

@@ -840,6 +840,7 @@ abstract final class Pref {
     return {
       'cache': 'yes',
       'cache-secs': bufSec.toStringAsFixed(3),
+      'demuxer-readahead-secs': bufSec.toStringAsFixed(3),
       'demuxer-hysteresis-secs': (bufSec / 1.5).toStringAsFixed(3),
       'demuxer-max-bytes': bufSiz,
       'demuxer-max-back-bytes': bufSiz,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' show min;
 import 'dart:ui';
 
@@ -1028,7 +1029,7 @@ class VideoDetailController extends GetxController
             final sb = StringBuffer('edl://!no_chapters;');
             for (var i in durl) {
               final video = VideoUtils.getCdnUrl(i.playUrls);
-              sb.write('%${video.length}%$video,length=${i.length! / 1000};');
+              sb.write('%${utf8.encode(video).length}%$video,length=${i.length! / 1000};');
             }
             videoUrl = sb.toString();
           } else {
