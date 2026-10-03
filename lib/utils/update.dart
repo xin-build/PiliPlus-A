@@ -35,9 +35,13 @@ abstract final class Update {
         return;
       }
       final data = res.data[0];
+      final String latestTag = (data['tag_name'] as String? ?? '').trim();
       final int latest =
-          DateTime.parse(data['created_at']).millisecondsSinceEpoch ~/ 1000;
-      if (BuildConfig.buildTime >= latest) {
+          DateTime.tryParse(data['created_at']?.toString() ?? '')
+                  ?.millisecondsSinceEpoch ??
+              0;
+      final int latestSec = latest ~/ 1000;
+      if (_isSameOrNewer(latestTag, latestSec)) {
         if (!isAuto) {
           SmartDialog.showToast('已是最新版本');
         }
@@ -112,6 +116,9 @@ abstract final class Update {
       }
     } catch (e) {
       if (kDebugMode) debugPrint('failed to check update: $e');
+      if (!isAuto) {
+        SmartDialog.showToast('检查更新失败，请检查网络连接');
+      }
     }
   }
 
@@ -145,5 +152,33 @@ abstract final class Update {
       if (kDebugMode) debugPrint('download error: $e');
       PageUtils.launchURL('${Constants.sourceCodeUrl}/releases/latest');
     }
+  }
+
+  static bool _isSameOrNewer(String latestTag, int latestTime) {
+    final cleanLatest = latestTag.replaceFirst(RegExp(r'^[vV]'), '').trim();
+    final cleanCurrent = BuildConfig.versionName
+        .replaceFirst(RegExp(r'^[vV]'), '')
+        .split('-')[0]
+        .split('+')[0]
+        .trim();
+    if (cleanLatest.isNotEmpty && cleanLatest == cleanCurrent) {
+      return true;
+    }
+    final lParts =
+        cleanLatest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    final cParts =
+        cleanCurrent.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    if (lParts.isNotEmpty && cParts.isNotEmpty && cleanCurrent != 'SNAPSHOT') {
+      final maxLen =
+          lParts.length > cParts.length ? lParts.length : cParts.length;
+      for (int i = 0; i < maxLen; i++) {
+        final lNum = i < lParts.length ? lParts[i] : 0;
+        final cNum = i < cParts.length ? cParts[i] : 0;
+        if (cNum > lNum) return true;
+        if (cNum < lNum) return false;
+      }
+      return true;
+    }
+    return BuildConfig.buildTime >= latestTime;
   }
 }
