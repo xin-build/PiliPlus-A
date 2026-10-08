@@ -213,7 +213,6 @@ class _WhisperDetailPageState
             height: 42,
             onTap: () => autoWrapReportDialog(
               context,
-              ban: false,
               ReportOptions.imMsgReport,
               (reasonType, reasonDesc, banUid) =>
                   _whisperDetailController.onReport(
@@ -256,7 +255,6 @@ class _WhisperDetailPageState
                   Get.back();
                   autoWrapReportDialog(
                     context,
-                    ban: false,
                     ReportOptions.imMsgReport,
                     (reasonType, reasonDesc, banUid) =>
                         _whisperDetailController.onReport(

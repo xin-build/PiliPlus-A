@@ -231,7 +231,7 @@
 
 ## 下载
 
-可以通过右侧release进行下载或拉取代码到本地进行编译
+可以从 [Releases](https://github.com/xin-build/PiliPlus-A/releases) 下载，或克隆仓库拉取代码后在本地编译。
 
 <br/>
 

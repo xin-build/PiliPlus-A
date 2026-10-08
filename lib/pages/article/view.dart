@@ -432,6 +432,11 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                                 pic: summary.cover,
                                 title: summary.title,
                                 uname: summary.author?.name,
+                                replyInfo: (
+                                  oid: controller.oid,
+                                  replyType: controller.replyType,
+                                ),
+                                mentionItem: summary.author?.mentionItem,
                                 onSuccess: () {
                                   if (forward != null) {
                                     int count = forward.count ?? 0;
@@ -545,6 +550,7 @@ class _ArticlePageState extends CommonDynPageState<ArticlePage> {
                       CachedNetworkImage(
                         height: height,
                         width: maxWidth,
+                        gaplessPlayback: true,
                         memCacheWidth: memCacheWidth,
                         memCacheHeight: memCacheHeight,
                         fit: pic.isLongPic == true ? BoxFit.cover : null,
