@@ -1086,4 +1086,16 @@ abstract final class Pref {
 
   static int get backwardFastDuration =>
       _setting.get(SettingBoxKey.backwardFastDuration, defaultValue: 10);
+
+  static String get renderGpuMode =>
+      _setting.get(SettingBoxKey.renderGpuMode, defaultValue: 'auto');
+
+  static String get renderGpuName =>
+      _setting.get(SettingBoxKey.renderGpuName, defaultValue: '');
+
+  static bool get d3d11FlipModel =>
+      _setting.get(SettingBoxKey.d3d11FlipModel, defaultValue: true);
+
+  static bool get adaptiveGpuVram =>
+      _setting.get(SettingBoxKey.adaptiveGpuVram, defaultValue: true);
 }

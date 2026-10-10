@@ -56,6 +56,7 @@ import 'package:PiliPlus/pages/setting/pages/bar_set.dart';
 import 'package:PiliPlus/pages/setting/pages/color_select.dart';
 import 'package:PiliPlus/pages/setting/pages/display_mode.dart';
 import 'package:PiliPlus/pages/setting/pages/font_setting.dart';
+import 'package:PiliPlus/pages/setting/pages/gpu_setting.dart';
 import 'package:PiliPlus/pages/setting/pages/logs.dart';
 import 'package:PiliPlus/pages/setting/pages/play_speed_set.dart';
 import 'package:PiliPlus/pages/setting/view.dart';
@@ -114,6 +115,8 @@ class Routes {
     GetPage(name: '/fontSetting', page: () => const FontSettingPage()),
     // 屏幕帧率
     GetPage(name: '/displayModeSetting', page: () => const SetDisplayMode()),
+    // GPU 渲染与性能设置
+    GetPage(name: '/gpuSetting', page: () => const GpuSettingPage()),
     //
     GetPage(name: '/articlePage', page: () => const ArticlePage()),
 

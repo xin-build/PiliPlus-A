@@ -31,6 +31,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_fit_type.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/danmaku_options.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
+import 'package:PiliPlus/services/gpu/gpu_device_manager.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/android/android_helper.dart';
@@ -903,7 +904,14 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         'vd-lavc-dr': 'yes',
       },
       if (Platform.isWindows) ...{
-        'demuxer-max-bytes': '134217728', // 128MB
+        if (GpuDeviceManager.instance.getEffectiveD3D11Adapter() case final adapter? when adapter.isNotEmpty)
+          'd3d11-adapter': adapter,
+        if (Pref.d3d11FlipModel)
+          'd3d11-flip': 'yes',
+        'd3d11-exclusive-fs': 'no',
+        'demuxer-max-bytes': Pref.adaptiveGpuVram
+            ? GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString()
+            : '134217728',
         'demuxer-max-back-bytes': '33554432', // 32MB
         'framedrop': 'vo',
         'hr-seek-framedrop': 'yes',
@@ -984,7 +992,11 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       else ...{
         ...buffer,
         if (Platform.isWindows) ...{
-          'demuxer-max-bytes': (Pref.bufferSize * 0x100000).clamp(67108864.0, 268435456.0).toInt().toString(),
+          if (GpuDeviceManager.instance.getEffectiveD3D11Adapter() case final adapter? when adapter.isNotEmpty)
+            'd3d11-adapter': adapter,
+          'demuxer-max-bytes': Pref.adaptiveGpuVram
+              ? GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString()
+              : (Pref.bufferSize * 0x100000).clamp(67108864.0, 268435456.0).toInt().toString(),
           'demuxer-max-back-bytes': (32.0 * 0x100000).toInt().toString(),
         },
       },

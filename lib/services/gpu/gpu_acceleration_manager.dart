@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:PiliPlus/services/gpu/gpu_device_manager.dart';
 import 'package:PiliPlus/services/gpu/native_gpu_compute.dart';
 
 /// GPU & Multi-threading Acceleration Manager
@@ -22,6 +23,8 @@ class GpuAccelerationManager {
     }
     return '不可用 (使用多线程CPU模式)';
   }
+
+  static String get gpuSettingSubtitle => GpuDeviceManager.instance.gpuSettingSubtitle;
 
   /// Run compute-heavy task, offloading from UI thread
   Future<R> runCompute<Q, R>(ComputeCallback<Q, R> callback, Q message, {String? debugLabel}) {

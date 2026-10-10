@@ -11,6 +11,7 @@ import 'package:PiliPlus/pages/setting/widgets/select_dialog.dart';
 import 'package:PiliPlus/plugin/pl_player/models/audio_output_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/hwdec_type.dart';
 import 'package:PiliPlus/plugin/pl_player/models/video_output.dart';
+import 'package:PiliPlus/services/gpu/gpu_acceleration_manager.dart';
 import 'package:PiliPlus/utils/filtering_text.dart';
 import 'package:PiliPlus/utils/storage.dart';
 import 'package:PiliPlus/utils/storage_key.dart';
@@ -195,6 +196,15 @@ List<SettingsModel> get videoSettings => [
     leading: const Icon(Icons.video_settings_outlined),
     getSubtitle: () => '当前：${Pref.videoOutput}（此项即mpv的--vo）',
     onTap: _showVideoOutputDialog,
+  ),
+  NormalModel(
+    title: '渲染 GPU 与硬件性能配置',
+    leading: const Icon(Icons.developer_board_outlined),
+    getSubtitle: () => GpuAccelerationManager.gpuSettingSubtitle,
+    onTap: (context, setState) async {
+      await Get.toNamed('/gpuSetting');
+      setState();
+    },
   ),
 ];
 
