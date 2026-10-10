@@ -935,8 +935,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       player,
       configuration: VideoControllerConfiguration(
         enableHardwareAcceleration: hwdec != null,
-        // Size the Android surface before rendering a paused first frame.
-        androidAttachSurfaceAfterVideoParameters: true,
+        androidAttachSurfaceAfterVideoParameters: false,
         vo: vo.isEmpty ? null : vo,
         hwdec: hwdec,
       ),
