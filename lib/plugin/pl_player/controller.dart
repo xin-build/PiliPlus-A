@@ -888,7 +888,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       'audio-wait-open': '0.2',
       'gapless-audio': 'yes',
       'stream-lavf-o':
-          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=4xx,5xx',
+          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=1',
       if (PlatformUtils.isDesktop) ...{
         'fbo-format': 'rgba8',
         'scale': 'bilinear',
@@ -991,16 +991,12 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       else ...{
         ...buffer,
         if (Platform.isWindows) ...{
-          if (GpuDeviceManager.instance.getEffectiveD3D11Adapter() case final adapter? when adapter.isNotEmpty)
-            'd3d11-adapter': adapter,
           'demuxer-max-bytes': Pref.adaptiveGpuVram
               ? GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString()
               : (Pref.bufferSize * 0x100000).clamp(67108864.0, 268435456.0).toInt().toString(),
           'demuxer-max-back-bytes': (32.0 * 0x100000).toInt().toString(),
         },
       },
-      'stream-lavf-o':
-          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=4xx,5xx',
     };
 
     String video = dataSource.videoSource;

@@ -402,7 +402,7 @@ class AudioController extends GetxController
           'audio-wait-open': '0.2',
           'gapless-audio': 'yes',
           'stream-lavf-o':
-              'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=4xx,5xx',
+              'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=1',
           ...Pref.initBuffer(),
         },
       ),

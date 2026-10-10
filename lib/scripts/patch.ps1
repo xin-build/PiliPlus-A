@@ -2,6 +2,18 @@ param(
     [string]$platform = ""
 )
 
+if (!$env:FLUTTER_ROOT) {
+    $flutterCmd = Get-Command flutter -ErrorAction SilentlyContinue
+    if ($flutterCmd) {
+        $env:FLUTTER_ROOT = (Resolve-Path "$($flutterCmd.Source)/../..").Path
+    } else {
+        $env:FLUTTER_ROOT = "D:\fullter\flutter"
+    }
+}
+if (!$env:GITHUB_WORKSPACE) {
+    $env:GITHUB_WORKSPACE = (Resolve-Path "$PSScriptRoot/../..").Path
+}
+
 git config --global user.name "ci"
 git config --global user.email "example@example.com"
 
