@@ -43,6 +43,7 @@ android {
             it.load(properties.inputStream())
     }
 
+    val defaultKeystore = file("piliplus_release.jks")
     val config = keyProperties.getProperty("storeFile")?.let {
         signingConfigs.create("release") {
             storeFile = file(it)
@@ -52,7 +53,16 @@ android {
             enableV1Signing = true
             enableV2Signing = true
         }
-    }
+    } ?: if (defaultKeystore.exists()) {
+        signingConfigs.create("release") {
+            storeFile = defaultKeystore
+            storePassword = "piliplus"
+            keyAlias = "piliplus"
+            keyPassword = "piliplus"
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    } else null
 
     buildFeatures {
         if (project.hasProperty("dev")) {

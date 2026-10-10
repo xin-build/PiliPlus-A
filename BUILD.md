@@ -228,6 +228,17 @@ GitHub Actions 将自动执行：
    - CI 构建脚本 `build.ps1` 会自动从 Git 标签（例如 `v2.1.5`）提取发布版本号，并在各平台安装包与内置关于信息中正确注入版本标识。
 3. **`patch.ps1` 提示找不到 cupertino_ui**：
    - 执行 patch 之前必须先执行 `flutter pub get`，确保缓存中有相关组件包。
-4. **Android 签名配置**：
-   - 默认使用 debug 签名或由 CI 环境变量中配置的 KeyStore 签名。
-   - 若需使用自己的签名文件，在 `android/key.properties` 中填入路径与密钥即可。
+4. **Android 统一发布签名规范（永久一致保障）**：
+   - 为避免云端 GitHub Actions 每次构建随机生成不同证书导致用户无法覆盖安装的问题，本项目**已永久内置统一的 Release 签名密钥库**：`android/app/piliplus_release.jks`。
+   - **签名信息与证书指纹**：
+     - **密钥库路径**：`android/app/piliplus_release.jks`
+     - **密钥别名 (Alias)**：`piliplus`
+     - **密钥密码 (Store / Key Password)**：`piliplus`
+     - **证书有效期**：100 年（至 2126 年）
+     - **证书所有者**：`CN=PiliPlus-A Release, OU=PiliPlus, O=PiliPlus-A, L=Beijing, ST=Beijing, C=CN`
+     - **SHA-256 指纹**：`93:B9:1A:A2:0D:CA:8E:A0:B0:EC:B0:85:4E:AA:6F:15:D9:08:77:D2:8A:67:51:B1:D2:A5:4A:40:7D:B1:E5:D5`
+   - **平滑覆盖更新机制**：
+     - 无论是 GitHub Actions 自动化编译还是本地多环境编译，默认一律强制使用此套固定发布密钥进行 V1 + V2 全面签名。
+     - **保证后续所有版本（v2.1.6.2、v2.1.6.3...）的签名永久保持 100% 绝对一致**，支持所有设备直接平滑覆盖安装升级！
+   - **私有签名覆盖**：
+     - 若需使用个人的独立私有签名，在 `android/key.properties` 中填入对应证书路径与密码即可，构建系统将自动优先采用私有密钥。
