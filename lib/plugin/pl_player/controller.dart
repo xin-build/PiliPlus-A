@@ -887,10 +887,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       'audio-stream-silence': 'yes',
       'audio-wait-open': '0.2',
       'gapless-audio': 'yes',
-      'stream-lavf-o':
-          'reconnect=1,reconnect_at_eof=1,reconnect_streamed=1,reconnect_delay_max=5,reconnect_on_network_error=1,reconnect_on_http_error=1',
       if (PlatformUtils.isDesktop) ...{
-        'fbo-format': 'rgba8',
         'scale': 'bilinear',
         'cscale': 'bilinear',
         'dscale': 'bilinear',
@@ -899,22 +896,15 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         'sigmoid-upscaling': 'no',
         'hdr-compute-peak': 'no',
         'allow-delayed-peak-detect': 'yes',
-        'hwdec-extra-frames': '4',
-        'swapchain-depth': '2',
-        'vd-lavc-dr': 'yes',
       },
       if (Platform.isWindows) ...{
         if (GpuDeviceManager.instance.getEffectiveD3D11Adapter() case final adapter? when adapter.isNotEmpty)
           'd3d11-adapter': adapter,
-        if (Pref.d3d11FlipModel)
-          'd3d11-flip': 'yes',
         'd3d11-exclusive-fs': 'no',
         'demuxer-max-bytes': Pref.adaptiveGpuVram
             ? GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString()
             : '134217728',
         'demuxer-max-back-bytes': '33554432', // 32MB
-        'framedrop': 'vo',
-        'hr-seek-framedrop': 'yes',
       },
     };
     final autosync = Pref.autosync;
@@ -935,7 +925,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       player,
       configuration: VideoControllerConfiguration(
         enableHardwareAcceleration: hwdec != null,
-        androidAttachSurfaceAfterVideoParameters: false,
+        // Size the Android surface before rendering a paused first frame.
+        androidAttachSurfaceAfterVideoParameters: true,
         vo: vo.isEmpty ? null : vo,
         hwdec: hwdec,
       ),
@@ -1233,10 +1224,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
                 // if (kDebugMode) {
                 //   debugPrint("_buffered.value: ${_buffered.value}");
                 // }
-                if ((isBuffering.value && buffered.value == 0) ||
-                    playerStatus.isPlaying) {
+                if (isBuffering.value && buffered.value == 0) {
                   SmartDialog.showToast(
-                    '网络连接异常，自动重连中',
+                    '视频链接打开失败，重试中',
                     displayTime: const Duration(milliseconds: 500),
                   );
                   refreshPlayer();
