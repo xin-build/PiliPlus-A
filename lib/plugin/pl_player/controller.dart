@@ -884,9 +884,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
           (PlatformUtils.isMobile ? Pref.playerVolume : volume.value * 100)
               .toString(),
       'volume-max': kMaxVolume.toString(),
-      'audio-stream-silence': 'yes',
-      'audio-wait-open': '0.2',
-      'gapless-audio': 'yes',
+      'audio-pitch-correction': 'yes',
       if (PlatformUtils.isDesktop) ...{
         'scale': 'bilinear',
         'cscale': 'bilinear',
@@ -1304,7 +1302,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
 
   /// 设置倍速
   Future<void> setPlaybackSpeed(double speed) async {
-    lastPlaybackSpeed = playbackSpeed;
+    if (!longPressStatus.value) {
+      lastPlaybackSpeed = playbackSpeed;
+    }
 
     if (speed == _videoPlayerController?.state.rate) return;
 
@@ -1462,6 +1462,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     }
     if (val) {
       if (playerStatus.isPlaying) {
+        lastPlaybackSpeed = playbackSpeed;
         longPressStatus.value = val;
         HapticFeedback.lightImpact();
         await setPlaybackSpeed(
@@ -1470,8 +1471,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
       }
     } else {
       // if (kDebugMode) debugPrint('$playbackSpeed');
+      final restoreSpeed = lastPlaybackSpeed;
       longPressStatus.value = val;
-      await setPlaybackSpeed(lastPlaybackSpeed);
+      await setPlaybackSpeed(restoreSpeed);
     }
   }
 

@@ -267,11 +267,11 @@ abstract final class Pref {
   );
 
   static String get videoSync =>
-      _setting.get(SettingBoxKey.videoSync, defaultValue: Platform.isWindows ? 'audio' : 'display-resample');
+      _setting.get(SettingBoxKey.videoSync, defaultValue: 'audio');
 
   static String get autosync => _setting.get(
     SettingBoxKey.autosync,
-    defaultValue: Platform.isAndroid ? '30' : '0',
+    defaultValue: '0',
   );
 
   static CDNService get defaultCDNService {
@@ -835,13 +835,12 @@ abstract final class Pref {
   }
 
   static Map<String, String> initBuffer([double playbackSpeed = 1.0]) {
-    final bufSec = Pref.bufferSec * playbackSpeed;
+    final bufSec = Pref.bufferSec;
     final bufSiz = (Pref.bufferSize * 0x100000).toStringAsFixed(0);
     return {
       'cache': 'yes',
       'cache-secs': bufSec.toStringAsFixed(3),
-      'demuxer-readahead-secs': bufSec.toStringAsFixed(3),
-      'demuxer-hysteresis-secs': (bufSec / 1.5).toStringAsFixed(3),
+      'demuxer-hysteresis-secs': (bufSec / 10).clamp(2.0, 10.0).toStringAsFixed(3),
       'demuxer-max-bytes': bufSiz,
       'demuxer-max-back-bytes': bufSiz,
     };
