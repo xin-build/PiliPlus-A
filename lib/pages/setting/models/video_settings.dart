@@ -163,7 +163,7 @@ List<SettingsModel> get videoSettings => [
     title: '缓冲大小',
     leading: const Icon(Icons.storage_outlined),
     getSubtitle: () =>
-        '当前：${Pref.bufferSize}MB。同时为前向和后向缓冲区大小。对于直播流，无后向缓冲大小，全部转给前向（此选项即mpv的--demuxer-max-bytes，--demuxer-max-back-bytes）',
+        '当前：${Pref.bufferSize}MB。设置前向缓冲区大小（后向缓冲控制在16~32MB，保证倍速不卡顿）。',
     onTap: _showBufferSizeDialog,
   ),
   NormalModel(

@@ -885,6 +885,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
               .toString(),
       'volume-max': kMaxVolume.toString(),
       'audio-pitch-correction': 'yes',
+      'demuxer-donate-buffer': 'no',
+      'demuxer-hysteresis-secs': '0',
       if (PlatformUtils.isDesktop) ...{
         'scale': 'bilinear',
         'cscale': 'bilinear',

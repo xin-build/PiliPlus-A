@@ -266,13 +266,17 @@ abstract final class Pref {
     defaultValue: HwDecType.kHwdec,
   );
 
-  static String get videoSync =>
-      _setting.get(SettingBoxKey.videoSync, defaultValue: 'audio');
+  static String get videoSync {
+    final val = _setting.get(SettingBoxKey.videoSync);
+    if (val == null || val == 'display-resample') return 'audio';
+    return val;
+  }
 
-  static String get autosync => _setting.get(
-    SettingBoxKey.autosync,
-    defaultValue: '0',
-  );
+  static String get autosync {
+    final val = _setting.get(SettingBoxKey.autosync);
+    if (val == null || val == '30') return '0';
+    return val;
+  }
 
   static CDNService get defaultCDNService {
     if (_setting.get(SettingBoxKey.CDNService) case final String cdnName) {
@@ -836,13 +840,15 @@ abstract final class Pref {
 
   static Map<String, String> initBuffer([double playbackSpeed = 1.0]) {
     final bufSec = Pref.bufferSec;
-    final bufSiz = (Pref.bufferSize * 0x100000).toStringAsFixed(0);
+    final maxBytes = ((Pref.bufferSize.clamp(64.0, 512.0)) * 0x100000).toInt();
+    final backBytes = (maxBytes ~/ 4).clamp(16 * 0x100000, 32 * 0x100000);
     return {
       'cache': 'yes',
       'cache-secs': bufSec.toStringAsFixed(3),
-      'demuxer-hysteresis-secs': (bufSec / 10).clamp(2.0, 10.0).toStringAsFixed(3),
-      'demuxer-max-bytes': bufSiz,
-      'demuxer-max-back-bytes': bufSiz,
+      'demuxer-hysteresis-secs': '0',
+      'demuxer-donate-buffer': 'no',
+      'demuxer-max-bytes': maxBytes.toString(),
+      'demuxer-max-back-bytes': backBytes.toString(),
     };
   }
 
