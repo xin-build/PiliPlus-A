@@ -828,23 +828,30 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.enableLongShowControl, defaultValue: false);
 
   static double get bufferSize {
-    final defaultBuf = PlatformUtils.isMobile ? 64.0 : 192.0;
-    final val = _setting.get(SettingBoxKey.bufferSize, defaultValue: defaultBuf);
-    return val < 32.0 ? defaultBuf : val;
+    final defaultBuf = PlatformUtils.isMobile ? 256.0 : 512.0;
+    final val = _setting.get(SettingBoxKey.bufferSize);
+    if (val == null || val <= 64.0) {
+      return defaultBuf;
+    }
+    return (val as num).toDouble();
   }
 
   static double get bufferSec {
-    final val = _setting.get(SettingBoxKey.bufferSec, defaultValue: 120.0);
-    return val < 30.0 ? 120.0 : val;
+    final val = _setting.get(SettingBoxKey.bufferSec);
+    if (val == null || val <= 120.0) {
+      return 300.0;
+    }
+    return (val as num).toDouble();
   }
 
   static Map<String, String> initBuffer([double playbackSpeed = 1.0]) {
     final bufSec = Pref.bufferSec;
-    final maxBytes = ((Pref.bufferSize.clamp(64.0, 512.0)) * 0x100000).toInt();
-    final backBytes = (maxBytes ~/ 4).clamp(16 * 0x100000, 32 * 0x100000);
+    final maxBytes = ((Pref.bufferSize.clamp(64.0, 4096.0)) * 0x100000).toInt();
+    final backBytes = (maxBytes ~/ 4).clamp(16 * 0x100000, 64 * 0x100000);
     return {
       'cache': 'yes',
       'cache-secs': bufSec.toStringAsFixed(3),
+      'demuxer-readahead-secs': bufSec.toStringAsFixed(3),
       'demuxer-hysteresis-secs': '0',
       'demuxer-donate-buffer': 'no',
       'demuxer-max-bytes': maxBytes.toString(),

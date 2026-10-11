@@ -163,14 +163,14 @@ List<SettingsModel> get videoSettings => [
     title: '缓冲大小',
     leading: const Icon(Icons.storage_outlined),
     getSubtitle: () =>
-        '当前：${Pref.bufferSize}MB。设置前向缓冲区大小（后向缓冲控制在16~32MB，保证倍速不卡顿）。',
+        '当前：${Pref.bufferSize}MB。设置前向缓冲区大小（移动端推荐 256MB+，桌面端推荐 512MB+）。',
     onTap: _showBufferSizeDialog,
   ),
   NormalModel(
     title: '缓冲时长',
     leading: const Icon(Icons.av_timer),
     getSubtitle: () =>
-        '当前：${Pref.bufferSec}s。实际缓冲为二者最小值。对于直播流，该选项无效（此选项即mpv的--cache-secs）',
+        '当前：${Pref.bufferSec}s。设置最大预载时长（默认 300s，充足预载防止断流）。',
     onTap: _showBufferSecDialog,
   ),
   NormalModel(

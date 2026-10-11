@@ -901,10 +901,10 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         if (GpuDeviceManager.instance.getEffectiveD3D11Adapter() case final adapter? when adapter.isNotEmpty)
           'd3d11-adapter': adapter,
         'd3d11-exclusive-fs': 'no',
-        'demuxer-max-bytes': Pref.adaptiveGpuVram
-            ? GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString()
-            : '134217728',
-        'demuxer-max-back-bytes': '33554432', // 32MB
+        if (Pref.adaptiveGpuVram) ...{
+          'demuxer-max-bytes': GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString(),
+          'demuxer-max-back-bytes': '33554432', // 32MB
+        },
       },
     };
     final autosync = Pref.autosync;
@@ -944,8 +944,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     return player;
   }
 
-  late final buffer = Pref.initBuffer(_playbackSpeed.value);
-  late final liveBuffer = Pref.initLiveBuffer();
+  Map<String, String> get buffer => Pref.initBuffer(_playbackSpeed.value);
+  Map<String, String> get liveBuffer => Pref.initLiveBuffer();
 
   // 配置播放器
   Future<void> _createVideoController(
@@ -981,11 +981,9 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         ...liveBuffer
       else ...{
         ...buffer,
-        if (Platform.isWindows) ...{
-          'demuxer-max-bytes': Pref.adaptiveGpuVram
-              ? GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString()
-              : (Pref.bufferSize * 0x100000).clamp(67108864.0, 268435456.0).toInt().toString(),
-          'demuxer-max-back-bytes': (32.0 * 0x100000).toInt().toString(),
+        if (Platform.isWindows && Pref.adaptiveGpuVram) ...{
+          'demuxer-max-bytes': GpuDeviceManager.instance.getAdaptiveDemuxerBytes().toString(),
+          'demuxer-max-back-bytes': '33554432', // 32MB
         },
       },
     };
